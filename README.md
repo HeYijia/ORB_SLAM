@@ -1,4 +1,5 @@
-# ORB_SLAM
+# ORB-SLAM Monocular
+#### Current version: 1.0.1 (see [Changelog.md](https://github.com/raulmur/ORB_SLAM/blob/master/Changelog.md))
 
 ORB-SLAM is a versatile and accurate Monocular SLAM solution able to compute in real-time the camera trajectory and a sparse 3D reconstruction of the scene in a wide variety of environments, ranging from small hand-held sequences to a car driven around several city blocks. It is able to close large loops and perform global relocalisation in real-time and from wide baselines.
 
@@ -15,7 +16,7 @@ Link to pdf: http://webdiis.unizar.es/~raulmur/MurMontielTardosTRO15.pdf
 
 #1. License
 
-ORB-SLAM is released under a GPLv3 license. Please note that we provide along ORB-SLAM a modified version of g2o and DBoW2 which are both BSD. 
+ORB-SLAM is released under a [GPLv3 license](https://github.com/raulmur/ORB_SLAM/blob/master/License-gpl.txt). For a list of all code/library dependencies (and associated licenses), please see [Dependencies.md](https://github.com/raulmur/ORB_SLAM/blob/master/Dependencies.md).
 
 For a closed-source version of ORB-SLAM for commercial purposes, please contact the authors. 
 
@@ -48,30 +49,32 @@ If you do not have already installed ROS in your computer, we recommend you to i
 
 **If you use ROS Indigo, remove the depency of opencv2 in the manifest.xml.**
 
-##2.3 g2o (included)
-We use g2o to perform several optimizations. We include a modified copy of the library including only the components we need 
-and also some changes that are listed in `Thirdparty/g2o/Changes.txt`. 
-In order to compile g2o you will need to have installed CHOLMOD, BLAS, LAPACK and Eigen3.
+##2.3 OpenCV
+We use OpenCV to manipulate images and features. If you use a ROS version older than ROS Indigo, OpenCV is already included in the ROS distribution. In newer version of ROS, OpenCV is not included and you will need to install it. **We tested OpenCV 2.4**. Dowload and install instructions can be found at: http://opencv.org/
 
-	sudo apt-get install libsuitesparse-dev
+##2.4 g2o (included in Thirdparty)
+We use a modified version of g2o (see original at https://github.com/RainerKuemmerle/g2o) to perform optimizations.
+In order to compile g2o you will need to have installed BLAS, LAPACK and Eigen3 (at least 3.1.0).
+
 	sudo apt-get install libblas-dev
 	sudo apt-get install liblapack-dev
 	sudo apt-get install libeigen3-dev
 
-##2.4 DBoW2 (included)
-We make use of some components of the DBoW2 library (https://github.com/dorian3d/DBoW2) for place recognition and feature matching. We include a modified copy of the library including only the components we need and also some modifications that are listed in `Thirdparty/DBoW2/LICENSE.txt`. 
-It only depends on OpenCV, but it should be included in the ROS distribution.
+##2.5 DBoW2 (included in Thirdparty)
+We make use of some components of the DBoW2 and DLib library (see original at https://github.com/dorian3d/DBoW2) for place recognition and feature matching. There are no additional dependencies to compile DBoW2.
 
 
 #3. Installation
 
-1. Make sure you have installed ROS and all library dependencies (boost, eigen3, cholmod, blas, lapack).
+1. Make sure you have installed ROS and all library dependencies (boost, eigen3, opencv, blas, lapack).
 
 2. Clone the repository:
 
 		git clone https://github.com/raulmur/ORB_SLAM.git ORB_SLAM
 		
-3. Add the path where you cloned ORB-SLAM to the `ROS_PACKAGE_PATH` environment variable (better if you add the export line to your .bashrc file)
+3. Add the path where you cloned ORB-SLAM to the `ROS_PACKAGE_PATH` environment variable. To do this, modify your .bashrc and add at the bottom the following line (replace PATH_TO_PARENT_OF_ORB_SLAM):
+
+		export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:PATH_TO_PARENT_OF_ORB_SLAM
 
 4. Build g2o. Go into `Thirdparty/g2o/` and execute:
 
@@ -80,7 +83,7 @@ It only depends on OpenCV, but it should be included in the ROS distribution.
 		cmake .. -DCMAKE_BUILD_TYPE=Release
 		make 
 
-	*Tip: To achieve the best performance in your computer, set your favorite compilation flags in line 97 and 98 of* `Thirdparty/g2o/CMakeLists.txt` 
+	*Tip: To achieve the best performance in your computer, set your favorite compilation flags in line 61 and 62 of* `Thirdparty/g2o/CMakeLists.txt` 
 		  (by default -03 -march=native)
 
 5. Build DBoW2. Go into Thirdparty/DBoW2/ and execute:
