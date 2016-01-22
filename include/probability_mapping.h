@@ -19,15 +19,24 @@ private:
         //int y; // pixel y
     };
 
+    /** \brief void getImageGradient(cv::Mat& image, cv::Mat* grad): calculate pixel gradient over entire image */
     void getImageGradient(cv::Mat& image, cv::Mat* grad);
-    void getGradientOrientation(cv::Mat& grad, float th);
+    /** \brief void getGradientOrientation(cv::Mat& grad, float th): calculate gradient orientation over entire image */
+    void getGradientOrientation(cv::Mat& grad, float th); 
+    /** \brief void getInPlaneRotation(KeyFrame& k1, KeyFrame& k2): get in-plane rotation between two KeyFrames */
     void getInPlaneRotation(KeyFrame& k1, KeyFrame& k2);
-    void getIntensityGradient(cv::Mat im, float* g);
-    void getIntensityGradient_D(cv::Mat im, float* q);
-    void getPixelDepth(cv::Mat& R,cv::Mat& T, cv::Mat& K, cv::Mat& Im, int x, int y, float *p);
+    /** \brief void getIntensityGradient(cv::Mat im, float* g): calculate intensity gradient of an image (Eq 5) */
+    void getIntensityGradient(cv::Mat im, int x, int y, float* g);
+    /** \brief void getIntensityGradient_D(cv::Mat im, float* q): calculate the derivate of the intensity gradient of an image (Eq 5) */
+    void getIntensityGradient_D(cv::Mat im, float* q); 
+    /** \brief void getPixelDepth(cv::Mat& R,cv::Mat& T, cv::Mat& K, cv::Mat& Im, int x, int y, float *p): calculate pixel inverse depth 
+        R: rotation matrix; T: translation matrix; K: keyframe; Im: the image (pixel matrix) (Eq 8) */
+    void getPixelDepth(cv::Mat& R,cv::Mat& T, KeyFrame* K, cv::Mat& Im, int x, int y, float *p);
+    /** \brief bool chiTest(const depthHo ha, const depthHo hb, float* chi_val): test whether two hypotheses are compatible (Eq 10) */
     bool chiTest(const depthHo ha, const depthHo hb, float* chi_val);
-    void depthDistribution(float p, float sigma, depthHo* hypothesis);
-
+    /** \brief void depthDistribution(float p, float sigma, depthHo* hypothesis): calculate the parameters for inverse depth distribution for a pixel (Eq 11) */
+    void depthDistribution(const vector<depthHo> best_compatible_ho, depthHo* hypothesis);
+    // should also have something for pseudocode.cc ~line 120
 public:
 
     /** \brief void first_loop(KeyFrame kf, depthHo**, std::vector<depthHo>&): return results of epipolar search (depth hypotheses) */
