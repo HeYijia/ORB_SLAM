@@ -344,6 +344,11 @@ for(size_t i=0; i<vpKFs.size(); i++)
                     }
                 }
             }
+ 	    for (int px = 1; px < (original.rows - 1); px++) {
+		for (int py = 1; py < (original.cols - 1); py++) {
+		
+		}
+	    }	
        }
 /*
 	int support_count = 0;
@@ -371,7 +376,8 @@ for(size_t i=0; i<vpKFs.size(); i++)
 					}
 				} 
 			}			
-		}
-*/		
+		}		
 	}
+*/
+	
 
