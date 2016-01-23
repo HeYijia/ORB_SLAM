@@ -1,5 +1,6 @@
 //parameters for semi-dense probability mapping
 int N = 7;
+int covisN = 20;
 int sigmaI = 20;
 int lambdaG = 8;
 int lambdaL = 80;
@@ -9,8 +10,6 @@ int lambdaN = 3;
 struct depth_ho {
     float depth; // pixel depth hypothesis
     float sigma; // pixel sigma depth hypothesis
-    //int x; // pixel x
-    //int y; // pixel y
 };
 
 for(size_t i=0; i<vpKFs.size(); i++) {
@@ -22,7 +21,7 @@ for(size_t i=0; i<vpKFs.size(); i++) {
 	
 	
 	//finding the Keyframes that best match pKF
-	vector<ORB_SLAM::KeyFrame*> closestMatches = pKF->GetBestCovisibilityKeyFrames(20);
+	vector<ORB_SLAM::KeyFrame*> closestMatches = pKF->GetBestCovisibilityKeyFrames(covisN);
 	set<MapPoint*> orbMP = pKF->GetMapPoints();
 	vector<float> vDepths;
 	vDepths.reserve(orbMP.size());
@@ -363,7 +362,6 @@ for(size_t i=0; i<vpKFs.size(); i++) {
        // INTER - KEYFRAME DEPTH CHECKING AND SMOOTHING
 
         // get neighbor keyframes:
-        
         // set current keyframe of LocalMapping
         SearchInNeighbors() // (LocalMapping.h)
         getConnectedKeyFrames() // (KeyFrame.h) of LocalMapping::mCurrentKeyFrame and iterator through those
