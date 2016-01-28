@@ -26,6 +26,10 @@
 #define lambdaL 80
 #define lambdaTheta 45
 #define lambdaN 3
+#define histo_length 30
+#define th_high = 100
+#define th_low = 50
+#define nnratio 0.6
 
 class ProbabilityMapping {
 
@@ -35,9 +39,9 @@ private:
 		float depth;
 		float sigma;
 	};
-
-	void getImageGradient(cv::Mat& image, cv::Mat* grad);
-    	void getGradientOrientation(cv::Mat& grad, float th);
+	
+	void getImageGradient(cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad);
+    	void getGradientOrientation(cv::Mat& gradx, cv::Mat& grady, float th);
         void getInPlaneRotation(KeyFrame& k1, KeyFrame& k2);
 	void getIntensityGradient(cv::Mat im, float* g);
         void getIntensityGradient_D(cv::Mat im, float* q);				
