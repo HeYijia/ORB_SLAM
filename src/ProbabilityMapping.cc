@@ -21,17 +21,157 @@
 #include <vector>
 
 
-void firstLoop(KeyFrame kf, depthHo**, std::vector<depthHo>&){;}
+void firstLoop(KeyFrame kf, depthHo** ho, std::vector<depthHo>* depth_ho){
+  vector<KeyFrame*> closestMatches = kf -> GetBestCovisibilityFrames();
+  float max_depth;
+  float min_depth;
+  StereoSearchConstraints(kf, min_depth, max_depth);
+  
+  cv::Mat gradx, grady, grad;
+  cv::Mat image = kf->GetImage();
+  GetImageGradient(image,gradx,grady,grad);
+  
+  vector<depthHo> depth_ho;
+  depthHo ho[image.rows][image.cols];
 
-void stereoSearch_constraints(){;}
+  for(int x = 0; x < image.rows; x++){
+    for(int y = 0; y < image.cols; y++){
+      ho[x][y] = NULL;
+      if(grad.at<float>(x,y) < lambdaG)
+        continue;
+  
+      for(size_t i=0; i<closestMatches.size(); i++){
+        KeyFrame* kf2 = closestMatches[j];
+        
+        struct depthHo dh;
+        EpipolarSearch(kf,kf2,x,y,gradx,grady,grad,min_depth,max_depth,dh);
+        depth_ho.push_back(dh);
+        ho[x][y] = dh;
+      }
+    }
+  }
+}
+
+void StereoSearchConstraints(KeyFrame kf, float* min_depth, float* max_depth){
+  
+  vector<float> orb_depths = kf->GetAllPointDepths();
+  
+  boost::variance::accumulator_set<double, stats<tag::variance> > acc;
+  for_each(orb_depths.begin(), orb_depths.end(), bind<void>(ref(acc), _1));
+
+  float max_depth = mean(acc) + 2*sqrt(variance(acc));
+  float min_depth = mean(acc) - 2*sqrt(variance(acc));
+}
 	        
-void epipolarSearch(){;}
+void EpipolarSearch(KeyFrame kf1, Keyframe kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh){
+  cv::Mat original = kf1->GetImage();
+  cv::Mat pixel = original.at<cv::Mat>(x,y);
+
+  cv::Mat image = kf2 -> GetImage();
+  cv::Mat image_stddev, image_mean;
+  cv::meanStdDev(image,mean,image_stddev);
+  
+  cv::Mat F12 = LocalMapping::ComputeF12(kf1,kf2); 
+  float a = x*F12.at<float>(0,0)+y*F12.at<float>(1,0)+F12.at<float>(2,0);
+  float b = x*F12.at<float>(0,1)+y*F12.at<float>(1,1)+F12.at<float>(2,1);
+  float c = x*F12.at<float>(0,2)+y*F12.at<float>(1,2)+F12.at<float>(2,2);
+  
+  float old_err = 1000.0;
+  float best_photometric_err = 0.0;
+  float best_gradient_modulo_err = 0.0;
+  int best_pixel;
+
+  for(int uj = minDepth; uj < maxDepth; uj++){
+    vj = (a/b)*uj+(c/b);
+    
+    float th_grad, th_epipolar_line, th_pi, th_rot;
+    cv::Mat gradx2, grady2, grad2;
+    GetImageGradient(image, gradx2, grady2, grad2);
+    GetGradientOrientation(uj,vj,gradx2,grady2,th_grad);
+    th_epipolar_line = fastAtan2(uj,vj); 
+    GetInPlaneRotation(kf1, kf2, th_rot);
+    GetImageGradient(x,y,gradx,grady,th_pi);
+
+    if(grad2.at<float>(uj,vj) < lambdaG)
+      continue;
+    if(abs(th_grad - th_epipolar_line + M_PI) < lambdaG)
+      continue;
+    if(abs(th_grad - th_epipolar_line - M_PI) < lambdaG)
+      continue;
+    if(abs(th_grad - ( th_pi + th_rot )) < lambdaTheta)
+      continue;
+    
+    float photometric_err = pixel - image.at<cv::Mat>(uj,vj);
+    float gradient_modulo_err = grad - grad2;
+    float err = (photometric_err*photometric_err + (gradient_modulo_err*gradient_modulo_err)/0.23)/(image_stddev);
+
+    if(err < old_err){
+      best_pixel = uj;
+      old_err = err;
+      best_photometric_err = photometric_err;
+      best_gradient_modulo_err = gradient_modulo_err;
+    }
+  }
+
+  int uj_plus = best_pixel + 1;
+  int vj_plus = (a/b)*uj_plus + (c/b);
+  int uj_minus = best_pixel - 1;
+  int vj_minus = (a/b)*uj_minus + (c/b);
+
+  float g = (image.at<float>(uj_plus, vj_plus) - image.at<float>(uj_minus, vj_minus))/2.0;
+
+  float q = (grad2.at<float>(uj_plus, uv_plus) - grad2.at<float>(uj_minus, vj_plus))/2;
+
+  float ustar = best_pixel + (g*best_photometric_err + (1/0.23)*q*best_gradinet_modulo_err)/(g*g + (1/0.23)*q*q);
+  float ustar_var = (2*image_stddev*image_stddev)/(g*g
+
+  ComputeInvDepthHypothesis(kf, best_pixel, ustar, ustar_var, a, b, c, dh);
+  
+  }
+}
 
 ////////////////////////
 // Utility functions
 ////////////////////////
 
-void getImageGradient(cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad){
+void ComputeInvDepthHypothesis(KeyFrame kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh){
+  cv::Mat image = kf -> GetImage();
+
+  cv::Mat frame_rot = kf->GetRotation();
+  cv::Mat inv_frame_rot =  frame_rot.t();
+  cv::Mat frame_translation = kf -> GetTranslation();
+  
+  cv::Mat transform_data(3,4,CV_32F);
+  frame_rot.copytTo(transform_data.colRange(0,3));
+  frame_translation.copyTo(transform_data.col(3));
+
+  const float fx = kf -> fx;
+  const float cx = kf -> cx;
+  cv::Mat calibration_matrix = kf -> GetCalibrationMatrix();
+  
+  cv::Mat corrected_image = calibrated_matrix * image;
+  int ujcx = pixel - cx;
+  int vjcx = (a/b) * ujcx + (c/b);
+
+  float inv_pixel_depth = (inv_frame_rot[2]*corrected_image.at<float>(ujcx,vjcx)-fx*inv_frame_rot[0]*corrected_image)/(transform_data[2][ujcx][vjcx]+fx*transform_data[0]);
+  
+  int ustarcx_min = ustar - cx - sqrt(ustar_var);
+  int vstarcx_min = (a/b)*ustarcx_min + (c/b);
+
+  float inv_depth_min = (inv_frame_rot[2]*corrected_image.at<float>(ustarcx_min ,vstarcx_min)-fx*inv_frame_rot[0]*corrected_image)/(-transform_data[2][ustarcx_min][vstarcx_min]+fx*transform_data[0]); 
+  
+  int ustarcx_max = ustar - cx + sqrt(ustar_var);
+  int vstarcx_max = (a/b)*ustarcx_max + (c/b);
+  
+  float inv_depth_max = (inv_frame_rot[2]*corrected_image.at<float>(ustarcx_max ,vstarcx_max)-fx*inv_frame_rot[0]*corrected_image)/(-transform_data[2][ustarcx_max][vstarcx_max]+fx*transform_data[0]);
+
+  float sigma_depth = max(abs(inv_depth_max),abs(inv_depth_min));
+
+  dh.depth = inv_pixel_depth;
+  dh.sigma = sigma_depth;
+}
+
+void GetImageGradient(cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad){
   cv::Mat gradx, grady;
 	
   cv::Scharr(image, gradx, CV_16S,1,0);
@@ -46,14 +186,14 @@ void getImageGradient(cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* g
   cv::addWeighted(absgradx,0.5,absgrady,0.5,grad,0);
 }
 
-void getGradientOrientation(int x, int y, cv::Mat& gradx, cv::Mat& grady, float th){
+void GetGradientOrientation(int x, int y, cv::Mat& gradx, cv::Mat& grady, float th){
   float valuex = gradx.at<float>(x,y);
   float valuey = grady.at<float>(x,y);
   float th =  cv::fastAtan2(gradx,grady);
 }
 
 //might be a good idea to store these when they get calculated during ORB-SLAM.
-void getInPlaneRotation(KeyFrame& k1, KeyFrame& k2, float th){
+void GetInPlaneRotation(KeyFrame& k1, KeyFrame& k2, float th){
   vector<cv::KeyPoint> vKPU1 = k1->GetKeyPointsUn();
   DBoW2::FeatureVector vFeatVec1 = k1->GetFeatureVector();
   vector<MapPoint*> vMapPoints1 = k1->GetMapPointMatches();
