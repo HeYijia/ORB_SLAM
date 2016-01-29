@@ -357,7 +357,45 @@ for(size_t i=0; i<vpKFs.size(); i++) {
                     }
                 }
             }
+ 	    for (int px = 1; px < (original.rows - 1); px++) {
+		for (int py = 1; py < (original.cols - 1); py++) {
+		
+		}
+	    }	
        }
+<<<<<<< HEAD
+=======
+/*
+	int support_count = 0;
+	depth_ho depth_arr2[original.rows][original.cols];
+	for(int px=1; px < original.rows - 1; px++){
+		for(int py=1; py < original.cols -1; py++){
+			depth_arr2[px][py] = NULL;
+			float chi_test,pa,pb;
+			float min_sigma = 100;
+			//calculate the support for the pixels
+			if(depths_arr[px][py] == NULL)
+				continue;
+			for(int nx=px-1; nx <= px+1; nx++){
+				for(int ny = py-1; ny <= py+1; ny++){ 
+				if(nx == ny)
+					continue;
+				if(depths_arr[nx][ny] == NULL) continue;
+				pa = depth_arr[px][py].depth;
+				pb = depth_arr[nx][ny].depth;
+				chi_test = (pa-pb)*(pa-pb)/(depth_arr[px][py].sigma*depth_arr[px][py])+(pa-pb)*(pa-pb)/(depth_arr[nx][ny]*depth_ar[nx][ny]);
+				if(chi_test < 5.99){
+					support_count++;
+					if(depth_arr[nx][ny].sigma * depth_arr.sigma < min_sigma *min_sigma){
+						min_sigma = depth_arr[nx][ny].sigma;
+					}
+				} 
+			}			
+		}		
+	}
+*/
+	
+>>>>>>> fb3f00d49890a11a546906271234163fa0748111
 
        // INTER - KEYFRAME DEPTH CHECKING AND SMOOTHING
 
