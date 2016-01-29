@@ -1,4 +1,10 @@
 build/
 bin/
-Data/Example.bag
-Data/ORBvoc.txt
+Data/*.bag
+Data/*.txt
+Data/*.tar.gz
+Thirdparty/DBoW2/lib/
+Thirdparty/g2o/
+Thirdparty/g2o/lib/
+Fourthparty/rospkgs/devel/
+Fourthparty/rospkgs/build/

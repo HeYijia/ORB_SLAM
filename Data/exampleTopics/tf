@@ -1,0 +1,20 @@
+transforms: 
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1454011296
+        nsecs: 57373080
+      frame_id: ORB_SLAM/World
+    child_frame_id: ORB_SLAM/Camera
+    transform: 
+      translation: 
+        x: 0.0730723440647
+        y: -0.0103782787919
+        z: 0.443024545908
+      rotation: 
+        x: -0.0492018410837
+        y: -0.137968843803
+        z: -0.00511549339091
+        w: 0.989200496237
+---

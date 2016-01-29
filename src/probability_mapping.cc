@@ -7,14 +7,17 @@
 // process methods //
 /////////////////////
 
-// INVERSE DEPTH HYPOTHESIS FUSION 
+// todo:
+// mark where equations from SDPM paper appear in code
+
+
+// INVERSE DEPTH HYPOTHESIS FUSION (per pixel):
 // check compatibility of each hypothesis with each of the others
 // Fuse groups of compatible hypotheses which are at least lambdaN in size
 // chi test (compatibility) should be a function 
 // inputs: an array of depth hypotheses
 // outputs: an inverse depth distribution
 void inverse_depth_hypothesis_fusion(const vector<depthHo> H, depthHo* dist) {
-    // "clear" the distribution parameters
     dist->depth = 0;
     dist->sigma = 0;
 
@@ -74,7 +77,7 @@ void pixelNeighborNeighborSupport (const depthHo** H, int px, int py, std::vecto
     }
 }
 
-// INTRA - KEYFRAME DEPTH CHECKING, SMOOTHING, AND GROWING
+// INTRA-KEYFRAME DEPTH CHECKING, SMOOTHING, AND GROWING
 void intra_keyframe_depth_checking(depthHo** H, int imrows, int imcols) {
 
     depthHo H_new[imrows][imcols];
@@ -148,7 +151,7 @@ void getNeighborKeyFrames (const ORB_SLAM::KeyFrame* Kf, std::vector<ORB_SLAM::K
     ORB_SLAM::LocalMapping::mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(covisN); //mvpOrderedConnectedKeyFrames()
 }
 
-// INTER - KEYFRAME DEPTH CHECKING AND SMOOTHING
+// INTER-KEYFRAME DEPTH CHECKING AND SMOOTHING
 void inter_keyframe_depth_checking(const ORB_SLAM::KeyFrame* currentKF, std::vector<ORB_SLAM::KeyFrame*> neighbors, depthHo** H, int imrows, int imcols) {
         
         // for each pixel of keyframe_i, project it onto each neighbor keyframe keyframe_j
@@ -272,3 +275,22 @@ void getFusion(const vector<depthHo> best_compatible_ho, depthHo* hypothesis, fl
     }
 } 
 
+// compute the chi_test values for neighbors of all pixels
+void memoize_neighbor_support(const depthHo** H, const int& w, const int& h, std::vector<depthHo>** c) {
+    c.clear();
+    float chi = 0;
+    for (int i = 0; i < w; i++) {
+        for (int j = 0; j < h; j++) {
+            std::vector<float> temp;
+            for (int ni = i - 1; ni <= i + 1; ni++) {
+                for (int nj = j - 1; nj <= j + 1; nj++) {
+                    if ((ni < 0) || (nj < 0)) continue;
+                    if ((ni == i) && (nj == j)) continue;
+                    if (chiTest(H[i][j], H[ni][nj], &chi))
+                        temp.push_back(H[ni][nj]);
+                }
+            }
+            c[i][j] = temp;
+        }
+    }
+}
