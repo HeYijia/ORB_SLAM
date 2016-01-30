@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/acceber/projects/eecs395/ORB_SLAM/debug/src/ProbabilityMapping.cc
+opencv2/opencv.hpp
+-
+ProbabilityMapping.h
+/home/acceber/projects/eecs395/ORB_SLAM/debug/src/ProbabilityMapping.h
+KeyFrame.h
+/home/acceber/projects/eecs395/ORB_SLAM/debug/src/KeyFrame.h
+
+inc/KeyFrame.h
+vector
+-
+opencv2/opencv.hpp
+-
+
+inc/ProbabilityMapping.h
+cstdlib
+-
+stdio.h
+-
+vector
+-
+

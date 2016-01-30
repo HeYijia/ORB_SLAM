@@ -1,0 +1,30 @@
+#include "KeyFrame.h"
+
+namespace ORB_SLAM {
+
+KeyFrame::KeyFrame() {}
+
+cv::Mat KeyFrame::GetImage() {
+    cv::Mat im;
+    return im;
+}
+
+cv::Mat KeyFrame::GetRotation() {
+    return GetImage();
+}
+
+cv::Mat KeyFrame::GetTranslation() {
+    return GetImage();
+}
+
+std::vector<KeyFrame*> KeyFrame::GetBestCovisibilityKeyFrames(const int &N) {
+    std::vector<KeyFrame*> v;
+    return v;
+}
+
+std::vector<float> GetAllPointDepths(int q = 2) {
+    std::vector<float> v;
+    return v;
+}
+
+}
