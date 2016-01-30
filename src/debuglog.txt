@@ -1,0 +1,11 @@
+1-29 R
+=======
+
+KeyFrame.cc/.h:
+- fixed what was probably a copy-paste error in the return statement (needed to return a vector of point depths;
+    was returning a single (median) point like the method it was modeled after
+- fixed method signature to include default parameter (int q = 2)
+ProbabilityMapping.cc/.h:
+- went through .cc file and made sure all method signatures were present and correct in the .h file
+- based on Google's style-guide, made sure input arguments (non-primitives) are passed as const& and
+    output arguments are pointers

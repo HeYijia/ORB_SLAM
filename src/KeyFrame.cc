@@ -688,7 +688,7 @@ float KeyFrame::ComputeSceneMedianDepth(int q)
     return vDepths[(vDepths.size()-1)/q];
 }
 
-vector<float> KeyFrame::GetAllPointDepths()
+vector<float> KeyFrame::GetAllPointDepths(int q)
 {
     vector<MapPoint*> vpMapPoints;
     cv::Mat Tcw_;
@@ -717,7 +717,8 @@ vector<float> KeyFrame::GetAllPointDepths()
 
     sort(vDepths.begin(),vDepths.end());
 
-    return vDepths[(vDepths.size()-1)/q];
+    //README
+    return vDepths;//[(vDepths.size()-1)/q];
 }
 
 } //namespace ORB_SLAM

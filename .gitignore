@@ -2,3 +2,6 @@ build/
 bin/
 Data/Example.bag
 Data/ORBvoc.txt
+Thirdparty/g2o/config.h
+Thirdparty/g2o/lib/*.so
+Thirdparty/DBoW2/lib/*.so

@@ -21,17 +21,20 @@
 #include <vector>
 
 
-void firstLoop(KeyFrame kf, depthHo** ho, std::vector<depthHo>* depth_ho){
-  vector<KeyFrame*> closestMatches = kf -> GetBestCovisibilityFrames();
+void FirstLoop(const KeyFrame *kf, depthHo** ho, std::vector<depthHo>* depth_ho){
+  
+  std::vector<KeyFrame*> closestMatches = kf->GetBestCovisibilityKeyFrames(N);
+  
   float max_depth;
   float min_depth;
-  StereoSearchConstraints(kf, min_depth, max_depth);
+  StereoSearchConstraints(kf, &min_depth, &max_depth);
   
   cv::Mat gradx, grady, grad;
   cv::Mat image = kf->GetImage();
-  GetImageGradient(image,gradx,grady,grad);
+  GetImageGradient(image, gradx, grady, grad);
   
-  vector<depthHo> depth_ho;
+  depth_ho->clear();
+
   depthHo ho[image.rows][image.cols];
 
   for(int x = 0; x < image.rows; x++){
@@ -41,20 +44,20 @@ void firstLoop(KeyFrame kf, depthHo** ho, std::vector<depthHo>* depth_ho){
         continue;
   
       for(size_t i=0; i<closestMatches.size(); i++){
-        KeyFrame* kf2 = closestMatches[j];
+        ORB_SLAM::KeyFrame* kf2 = closestMatches[j];
         
         struct depthHo dh;
         EpipolarSearch(kf,kf2,x,y,gradx,grady,grad,min_depth,max_depth,dh);
-        depth_ho.push_back(dh);
+        depth_ho->push_back(dh);
         ho[x][y] = dh;
       }
     }
   }
 }
 
-void StereoSearchConstraints(KeyFrame kf, float* min_depth, float* max_depth){
+void StereoSearchConstraints(const KeyFrame* kf, float* min_depth, float* max_depth){
   
-  vector<float> orb_depths = kf->GetAllPointDepths();
+  std::vector<float> orb_depths = kf->GetAllPointDepths();
   
   boost::variance::accumulator_set<double, stats<tag::variance> > acc;
   for_each(orb_depths.begin(), orb_depths.end(), bind<void>(ref(acc), _1));
@@ -63,11 +66,11 @@ void StereoSearchConstraints(KeyFrame kf, float* min_depth, float* max_depth){
   float min_depth = mean(acc) - 2*sqrt(variance(acc));
 }
 	        
-void EpipolarSearch(KeyFrame kf1, Keyframe kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh){
+void EpipolarSearch(const KeyFrame *kf1, const Keyframe *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh){
   cv::Mat original = kf1->GetImage();
   cv::Mat pixel = original.at<cv::Mat>(x,y);
 
-  cv::Mat image = kf2 -> GetImage();
+  cv::Mat image = kf2->GetImage();
   cv::Mat image_stddev, image_mean;
   cv::meanStdDev(image,mean,image_stddev);
   
@@ -130,11 +133,183 @@ void EpipolarSearch(KeyFrame kf1, Keyframe kf2, int x, int y, cv::Mat gradx, cv:
   }
 }
 
+void IntraKeyframeDepthChecking(depthHo** H, int imrows, int imcols) {
+
+    depthHo H_new[imrows][imcols];
+    for (int px = 1; px < (imrows - 1); px++) {
+        for (int py = 1; py < (imcols - 1); py++) {
+            H_new[px][py] = NULL;
+            if (H[px][py] == NULL) {
+                // check if this pixel is surrounded by at least two pixels that are compatible to each other.
+                std::vector<std::vector<depthHo>> best_compatible_ho;
+                
+                pixelNeighborNeighborSupport (H, px, py, best_compatible_ho);
+                
+                int max_support = 0;
+                int max_support_index = 0;
+                for (int c = 0; c < best_compatible_ho.size(); c++) {
+                    if (best_compatible_ho[c].size() > max_support) {
+                        max_support = best_compatible_ho[c].size();
+                        max_support_index = c;
+                    }
+                }
+                
+                // potentially grow the reconstruction density
+                if (max_support >= 2) {
+                    // assign this previous NULL depthHo the average depth and min sigma of its compatible neighbors
+                    depthHo fusion;
+                    float min_sigma;
+
+                    getFusion(best_compatible_ho[c], &fusion, &min_sigma);
+
+                    H_new[px][py].depth = fusion.depth;
+                    H_new[px][py].sigma = min_sigma;
+                }
+
+            } else {
+                // calculate the support of the pixel's  8 neighbors
+                std::vector<depthHo> best_compatible_ho;
+                
+                pixelNeighborSupport(H, px, py, best_compatible_ho);
+                
+                if (best_compatible_ho.size() < 2) {
+                    // average depth of the retained pixels
+                    // set sigma to minimum of neighbor pixels
+                    depthHo fusion;
+                    float min_sigma;
+
+                    getFusion(best_compatible_ho, &fusion, &min_sigma);
+
+                    H_new[px][py].depth = fusion.depth;
+                    H_new[px][py].sigma = min_sigma;
+
+                } else {
+                    H_new[px][py] = H[px][py];
+                }
+            }
+        }
+    }
+    
+    for (xnt x = 0; x < imrows; x++) {
+        for (int y = 0; y < imcols; y++) {
+            H[x][y] = H_new[x][y];
+        }
+    }
+} 
+
+void InverseDepthHypothesisFusion(const vector<depthHo> H, depthHo* dist) {
+    dist->depth = 0;
+    dist->sigma = 0;
+
+    vector<depthHo> best_compatible_ho;
+    
+    for (int a=0; a < H.size(); a++) {
+        vector<depthHo> compatible_ho;
+        
+        for (int b=0; b < H.size(); b++) {
+            // test if the hypotheses a and b are compatible
+            if (chi_test(H[a], H[b], NULL)) {
+                compatible_ho.push_back(H[b]); 
+            }
+        }
+        // test if hypothesis 'a' has the required support
+        if (compatible.size()-1 >= lambdaN && compatible.size() > best_compatible_depth.size()) {
+            compatible_ho.push_back(H[a]); 
+            best_compatible_ho = compatible_ho;
+        }
+    }
+
+    // calculate the parameters of the inverse depth distribution by fusing hypotheses
+    if (best_compatible_ho.size() >= lambdaN) {
+        getFusion(best_compatible_ho, &dist, NULL);
+    }
+} 
+
+void InterKeyframeDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** H, int imrows, int imcols) {
+        std::vector<ORB_SLAM::KeyFrame*> neighbors;
+        // option1: could just be the best covisibility keyframes
+        neighbors = Kf->GetBestCovisibilityKeyFrames(covisN);
+        // option2: could be found in one of the LocalMapping SearchByXXX() methods
+        ORB_SLAM::LocalMapping::SearchInNeighbors(); //mpCurrentKeyFrame->updateConnections()...AddConnection()...UpdateBestCovisibles()...
+        ORB_SLAM::LocalMapping::mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(covisN); //mvpOrderedConnectedKeyFrames()
+        
+        // for each pixel of keyframe_i, project it onto each neighbor keyframe keyframe_j
+        // and propagate inverse depth
+        for (int px = 0; px < imrows; px++) {
+            for (int py = 0; py < imcols; py++) {
+                if (H[px][py] == NULL) continue; 
+                float depthp = H[px][py].depth;
+                int compatible_neighbor_keyframes_count = 0; // count of neighboring keyframes in which there is at least one compatible pixel
+	        for(int j=0; j<neighbors.size(); j++){ 
+		    ORB_SLAM::KeyFrame* pKFj = neighbors[j];
+                    // calibration matrix
+	            cv::Mat Kj = pKFj -> GetCalibrationMatrix;
+		    cv::Mat Xp = Kj*image;
+                    // rotation matrix
+                    cv::Mat Rcwj = Tcw_.row(2).colRange(0,3);
+                    Rcwj = Rcwj.t();
+                    // translation matrix
+                    cv::Mat tcwj = pKF2->GetTranslation();
+                    cv::Mat Tcwj(3,4,CV_32F);
+                    Rcwj.copyTo(Tcwj.colRange(0,3));
+                    tcwj.copyTo(Tcwj.col(3));
+                    
+                    // compute the projection matrix to map 3D point from original image to 2D point in neighbor keyframe
+                    // Eq (12)
+                    xj = (Kj * Rcwj * (1 / depthp) * xp) + Kj * Tcwj; 
+                    float depthj = depthp / (Rcwj[2] * xp + depthp * Tcwj[2]); 
+
+                    // find the (float) coordinates of the new point in keyframe_j
+                    cv::Mat xyzj = xj * cv::Mat(px, py, depthp);
+                    float xj = xyzj[0];  
+                    float yj = xyzj[1]; 
+                    
+                    int compatible_points_count = 0; // count of compatible neighbor pixels
+                    std::vector<cv::Point> compatible_points;
+                    // look in 4-neighborhood pixel p_j,n around xj for compatible inverse depth
+                    for (int nj = floor(xj); nj <= nj + 1; nj++) {
+                        for (int ny = floor(yj); ny < ny + 1; ny++) {
+                            if (H[nx][ny] == NULL) continue;
+                            float depthjn = H[nx][ny].depth; 
+                            float sigmajn = H[nx][ny].sigma; 
+                            // Eq (13)
+                            float test = (depthp - depthjn) * (depthp - depthjn) / (sigmajn * sigmajn);
+                            if (test < 3.84) {
+                                compatible_points_count++;
+                                compatible_points.push_back(cv::Point(nx, ny));
+                            }
+                        }
+                    }
+                    
+                    // at least one compatible pixel p_j,n must be found in at least lambdaN neighbor keyframes
+                    if (compatible_points_count) {
+                        compatible_neighbor_keyframes_count++;
+                        float depthp_star = 1000;
+                        float sum_depth = 0;
+                        for (int p; p < compatible_points.size(); p++) {
+                            float depthjn = H[compatible_points[p].x][compatible_points[p].y].depth;
+                            float sigmajn = H[compatible_points[p].x][compatible_points[p].y].sigma;
+                            // equation (14)
+                            sum_depth += pow((depthjn - depthp * Rcwj[2] * xp * Tcwj[2]), 2) / (pow(depthjn, 4) * pow(sigmajn, 2)); 
+                        } 
+                    } 
+                }
+                // don't retain the inverse depth distribution of this pixel if not enough support in neighbor keyframes
+                if (compatible_neighbor_keyframes_count < lambdaN) {
+                    H[px][py] = NULL;
+                }
+            }
+        }
+    }
+} 
+
+
+
 ////////////////////////
 // Utility functions
 ////////////////////////
 
-void ComputeInvDepthHypothesis(KeyFrame kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh){
+void ComputeInvDepthHypothesis(const KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {
   cv::Mat image = kf -> GetImage();
 
   cv::Mat frame_rot = kf->GetRotation();
@@ -165,46 +340,45 @@ void ComputeInvDepthHypothesis(KeyFrame kf, int pixel, float ustar, float ustar_
   
   float inv_depth_max = (inv_frame_rot[2]*corrected_image.at<float>(ustarcx_max ,vstarcx_max)-fx*inv_frame_rot[0]*corrected_image)/(-transform_data[2][ustarcx_max][vstarcx_max]+fx*transform_data[0]);
 
-  float sigma_depth = max(abs(inv_depth_max),abs(inv_depth_min));
+  float sigma_depth = max(abs(inv_depth_max), abs(inv_depth_min));
 
   dh.depth = inv_pixel_depth;
   dh.sigma = sigma_depth;
 }
 
-void GetImageGradient(cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad){
-  cv::Mat gradx, grady;
+void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
 	
-  cv::Scharr(image, gradx, CV_16S,1,0);
-  cv::Scharr(image, grady, CV_16S,0,1);
+  cv::Scharr(image, gradx, CV_16S, 1, 0);
+  cv::Scharr(image, grady, CV_16S, 0, 1);
 	
   cv::Mat absgradx, absgrady;
 
   cv::convertScaleAbs(gradx, absgradx);
   cv::convertScaleAbs(grady, absgrady);
-  gradx = absgradx;
-  grady = absgrady;
-  cv::addWeighted(absgradx,0.5,absgrady,0.5,grad,0);
+  *gradx = absgradx;
+  *grady = absgrady;
+  cv::addWeighted(absgradx, 0.5, absgrady, 0.5, grad, 0);
 }
 
-void GetGradientOrientation(int x, int y, cv::Mat& gradx, cv::Mat& grady, float th){
+void GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th){
   float valuex = gradx.at<float>(x,y);
   float valuey = grady.at<float>(x,y);
-  float th =  cv::fastAtan2(gradx,grady);
+  *th =  cv::fastAtan2(gradx,grady);
 }
 
 //might be a good idea to store these when they get calculated during ORB-SLAM.
-void GetInPlaneRotation(KeyFrame& k1, KeyFrame& k2, float th){
-  vector<cv::KeyPoint> vKPU1 = k1->GetKeyPointsUn();
+void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {
+  std::vector<cv::KeyPoint> vKPU1 = k1->GetKeyPointsUn();
   DBoW2::FeatureVector vFeatVec1 = k1->GetFeatureVector();
-  vector<MapPoint*> vMapPoints1 = k1->GetMapPointMatches();
+  std::vector<MapPoint*> vMapPoints1 = k1->GetMapPointMatches();
   cv::Mat Descriptors1 = k1->GetDescriptors();
 
-  vector<cv::KeyPoint> vKPU2 = k2->GetKeyPointsUn();
+  std::vector<cv::KeyPoint> vKPU2 = k2->GetKeyPointsUn();
   DBoW2::FeatureVector vFeatVec2 = k2->GetFeatureVector();
-  vector<MapPoint*> vMapPoints2 = k2 ->GetMapPointMatches();
+  std::vector<MapPoint*> vMapPoints2 = k2 ->GetMapPointMatches();
   cv::Mat Descriptors2 = k2->GetDescriptors();
 
-  vector<int> rotHist[histo_length];
+  std::vector<int> rotHist[histo_length];
   for(int i=0;i<histo_length;i++)
     rotHist[i].reserve(500);DescriptorDistance
   
@@ -273,10 +447,89 @@ void GetInPlaneRotation(KeyFrame& k1, KeyFrame& k2, float th){
   std::sort(rotHist.begin(),rotHist.end());
 
   if(size % 2 == 0){
-    th = (rotHist[size/2 - 1] + rotHist[size/2])/2;
+    *th = (rotHist[size/2 - 1] + rotHist[size/2])/2;
   }
   else{
-    th = rotHist[size/2];
+    *th = rotHist[size/2];
   }
-  return th;
 }
+
+void PixelNeighborSupport(const depthHo** H, int px, int py, std::vector<depthHo>* support) {
+    support->clear();
+    for (int x = px - 1; x <= px + 1; x++) {
+        for (int y = py - 1; y <= py + 1; y++) {
+            if (x == px && y == py) continue; 
+            if (chi_test(H[x][y], H[px][py], NULL)) {
+                support->push_back(H[px][py]);
+            }
+        }
+    }
+}
+
+void PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector<std::vector<depthHo>* support) {
+    support->clear();
+    for (int x = px - 1; x <= px + 1; x++) {
+        for (int y = py - 1; y <= py + 1; y++) {
+            if (x == px && y == py) continue;
+            std::vector<depthHo> tempSupport;
+            float min_sigma = H[x][y].sigma;
+            for (int nx = px - 1; nx <= px + 1; nx++) {
+                for (int ny = py - 1; ny <= py + 1; ny++) {
+                    if ((nx == px && ny == py) || (nx == x && ny == y)) continue;
+                    if (chi_test(H[x][y], H[nx][ny], NULL) {
+                        tempSupport.push_back(H[nx][ny]);
+                    }
+                }
+            }
+            support->push_back(tempSupport);
+        }
+    }
+}
+
+void GetIntensityGradient_D(const cv::Mat& ImGrad, float* q) {
+    float grad_d = (ImGrad.at<float>(uplusone,vplusone) - ImGrad.at<float>(uminone,vminone))/2;
+    *q = grad_d;
+} 
+
+void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {
+    const float fx = kF->fx;
+    const float cx = kF->cx;
+
+    cv::Mat K = kF->GetCalibrationMatrix();
+
+    cv::Mat Xp = K*Im;
+
+    int ucx = u - cx;
+    int vcx = (a/b)*ucx + (c/b);
+    
+    float depthp = (R[2]*Xp.at<float>(ucx,vcx)-fx*R[0]*Xp)/(-T[2][ucx][vcx]+fx*T[0]);
+    *p = depthp;
+} 
+
+bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {
+    float chi_test = (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma) + (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma);
+    if (chi_val)
+        *chi_val = chi_test;
+    return (chi_test < 5.99);
+} 
+
+void GetFusion(const vector<depthHo>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {
+    hypothesis->depth = 0;
+    hypothesis->sigma = 0;
+    float temp_min_sigma = 0;
+    float pjsj =0; // numerator
+    float rsj =0; // denominator
+    for (int j = 0; j < best_compatible_ho.size(); j++) {
+        pjsj += (best_compatible_ho[j].depth / (best_compatible_ho[j].sigma * best_compatible_ho[j].sigma));
+        rsj += (1 / (best_compatible_ho[j].sigma * best_compatible_ho[j].sigma));
+        if (best_compatible_ho[j].sigma * best_compatible_ho[j].sigma < temp_min_sigma * temp_min_sigma) {
+            temp_min_sigma = best_compatible_ho[j].sigma;
+        }
+    }
+    hypothesis->depth = pjsj / rsj;
+    hypothesis->sigma = sqrt(1 / rsj);
+    if (min_sigma) {
+        *min_sigma = temp_min_sigma;
+    }
+} 
+
