@@ -9,6 +9,12 @@
 /home/acceber/projects/eecs395/ORB_SLAM/debug/src/ProbabilityMapping.cc
 opencv2/opencv.hpp
 -
+boost/accumulators/accumulators.hpp
+-
+boost/accumulators/statistics/variance.hpp
+-
+boost/accumulators/statistics/stats.hpp
+-
 ProbabilityMapping.h
 /home/acceber/projects/eecs395/ORB_SLAM/debug/src/ProbabilityMapping.h
 KeyFrame.h

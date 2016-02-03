@@ -17,9 +17,36 @@
  */
 
 #include <opencv2/opencv.hpp>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/variance.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
 
 #include "ProbabilityMapping.h"
 #include "KeyFrame.h"
+
+ProbabilityMapping::ProbabilityMapping() {}
+void ProbabilityMapping::ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {}
+void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {}
+void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
+void ProbabilityMapping::GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {}
+void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
+void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support) {}
+void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
+void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
+void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {}
+bool ProbabilityMapping::ChiTest(const depthHo*& ha, const depthHo*& hb, float* chi_val) { return true; }
+void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
+
+//void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho);
+void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth) {}
+void ProbabilityMapping::EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh) {}
+void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {}
+//void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols) {}
+void ProbabilityMapping::InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
+
+
+
+
 
 //  depthHo ho[image.rows][image.cols];
 void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho){
@@ -54,15 +81,15 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::v
   }
 }
 /*
-void StereoSearchConstraints(const ORB_SLAM::KeyFrame* kf, float* min_depth, float* max_depth){
+void StereoSearchConstraints(ORB_SLAM::KeyFrame* kf, float* min_depth, float* max_depth){
   
   std::vector<float> orb_depths = kf->GetAllPointDepths();
   
   boost::variance::accumulator_set<double, stats<tag::variance> > acc;
   for_each(orb_depths.begin(), orb_depths.end(), bind<void>(ref(acc), _1));
 
-  float max_depth = mean(acc) + 2*sqrt(variance(acc));
-  float min_depth = mean(acc) - 2*sqrt(variance(acc));
+  *max_depth = mean(acc) + 2*sqrt(variance(acc));
+  *min_depth = mean(acc) - 2*sqrt(variance(acc));
 }
 	        
 void EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh){
@@ -131,24 +158,24 @@ void EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const KeyFrame *kf2, int x, i
   
   }
 }
+*/
+void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo*** ho, int imrows, int imcols) {
 
-void IntraKeyFrameDepthChecking(depthHo** H, int imrows, int imcols) {
-
-    depthHo H_new[imrows][imcols];
+    depthHo* ho_new[imrows][imcols];
     for (int px = 1; px < (imrows - 1); px++) {
         for (int py = 1; py < (imcols - 1); py++) {
-            H_new[px][py] = NULL;
-            if (H[px][py] == NULL) {
+            ho_new[px][py] = NULL;
+            if (ho[px][py] == NULL) {
                 // check if this pixel is surrounded by at least two pixels that are compatible to each other.
-                std::vector<std::vector<depthHo>> best_compatible_ho;
+                std::vector<std::vector<depthHo*> > compatible_neighbor_neighbor_ho;
                 
-                pixelNeighborNeighborSupport (H, px, py, best_compatible_ho);
+                PixelNeighborNeighborSupport(ho, px, py, &compatible_neighbor_neighbor_ho);
                 
-                int max_support = 0;
-                int max_support_index = 0;
-                for (int c = 0; c < best_compatible_ho.size(); c++) {
-                    if (best_compatible_ho[c].size() > max_support) {
-                        max_support = best_compatible_ho[c].size();
+                unsigned int max_support = 0;
+                unsigned int max_support_index = 0;
+                for (size_t c = 0; c < compatible_neighbor_neighbor_ho.size(); c++) {
+                    if (compatible_neighbor_neighbor_ho[c].size() > max_support) {
+                        max_support = compatible_neighbor_neighbor_ho[c].size();
                         max_support_index = c;
                     }
                 }
@@ -156,46 +183,46 @@ void IntraKeyFrameDepthChecking(depthHo** H, int imrows, int imcols) {
                 // potentially grow the reconstruction density
                 if (max_support >= 2) {
                     // assign this previous NULL depthHo the average depth and min sigma of its compatible neighbors
-                    depthHo fusion;
+                    depthHo* fusion;
                     float min_sigma;
 
-                    getFusion(best_compatible_ho[c], &fusion, &min_sigma);
+                    GetFusion(compatible_neighbor_neighbor_ho[max_support_index], fusion, &min_sigma);
 
-                    H_new[px][py].depth = fusion.depth;
-                    H_new[px][py].sigma = min_sigma;
+                    ho_new[px][py]->depth = fusion->depth;
+                    ho_new[px][py]->sigma = min_sigma;
                 }
 
             } else {
                 // calculate the support of the pixel's  8 neighbors
-                std::vector<depthHo> best_compatible_ho;
+                std::vector<depthHo*> compatible_neighbor_ho;
                 
-                pixelNeighborSupport(H, px, py, best_compatible_ho);
+                PixelNeighborSupport(ho, px, py, &compatible_neighbor_ho);
                 
-                if (best_compatible_ho.size() < 2) {
+                if (compatible_neighbor_ho.size() < 2) {
                     // average depth of the retained pixels
                     // set sigma to minimum of neighbor pixels
                     depthHo fusion;
-                    float min_sigma;
+                    float min_sigma = 0;
 
-                    getFusion(best_compatible_ho, &fusion, &min_sigma);
+                    GetFusion(compatible_neighbor_ho, &fusion, &min_sigma);
 
-                    H_new[px][py].depth = fusion.depth;
-                    H_new[px][py].sigma = min_sigma;
+                    ho_new[px][py]->depth = fusion.depth;
+                    ho_new[px][py]->sigma = min_sigma;
 
                 } else {
-                    H_new[px][py] = H[px][py];
+                    ho_new[px][py] = ho[px][py];
                 }
             }
         }
     }
     
-    for (xnt x = 0; x < imrows; x++) {
+    for (int x = 0; x < imrows; x++) {
         for (int y = 0; y < imcols; y++) {
-            H[x][y] = H_new[x][y];
+            ho[x][y] = ho_new[x][y];
         }
     }
 } 
-
+/*
 void InverseDepthHypothesisFusion(const vector<depthHo> H, depthHo* dist) {
     dist->depth = 0;
     dist->sigma = 0;
@@ -220,7 +247,7 @@ void InverseDepthHypothesisFusion(const vector<depthHo> H, depthHo* dist) {
 
     // calculate the parameters of the inverse depth distribution by fusing hypotheses
     if (best_compatible_ho.size() >= lambdaN) {
-        getFusion(best_compatible_ho, &dist, NULL);
+        GetFusion(best_compatible_ho, &dist, NULL);
     }
 } 
 
@@ -453,7 +480,7 @@ void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* 
   }
 }
 
-void PixelNeighborSupport(const depthHo** H, int px, int py, std::vector<depthHo>* support) {
+void PixelNeighborSupport(const depthHo*** H, int px, int py, std::vector<depthHo>* support) {
     support->clear();
     for (int x = px - 1; x <= px + 1; x++) {
         for (int y = py - 1; y <= py + 1; y++) {
@@ -532,22 +559,3 @@ void GetFusion(const vector<depthHo>& best_compatible_ho, depthHo* hypothesis, f
     }
 } 
 */
-ProbabilityMapping::ProbabilityMapping() {}
-void ProbabilityMapping::ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {}
-void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {}
-void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
-void ProbabilityMapping::GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {}
-void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
-void ProbabilityMapping::PixelNeighborSuppport(const depthHo** H, int x, int y, std::vector<depthHo>* support) {}
-void ProbabilityMapping::PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector<std::vector<depthHo> >* support) {}
-void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
-void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {}
-bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
-void ProbabilityMapping::GetFusion(const std::vector<depthHo>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
-
-void ProbabilityMapping::StereoSearchConstraints(const ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth) {}
-void ProbabilityMapping::EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh) {}
-void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {}
-void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols) {}
-void ProbabilityMapping::InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
-

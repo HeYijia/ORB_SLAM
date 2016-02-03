@@ -55,14 +55,14 @@ public:
 	/* * \brief void first_loop(ORB_SLAM::KeyFrame kf, depthHo**, std::vector<depthHo>*): return results of epipolar search (depth hypotheses) */
 	void FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* support);
         /* * \brief void stereo_search_constraints(): return min, max inverse depth */
-        void StereoSearchConstraints(const ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth);
+        void StereoSearchConstraints(ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth);
 	/* * \brief void epipolar_search(): return distribution of inverse depths/sigmas for each pixel */
         void EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh);
 	/* * \brief void inverse_depth_hypothesis_fusion(const vector<depthHo> H, depthHo* dist): 
 	 * *         get the parameters of depth hypothesis distrubution from list of depth hypotheses */
         void InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist);
 	/* * \brief void intraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols): intra-keyframe depth-checking, smoothing, and growing. */
-        void IntraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols);
+        void IntraKeyFrameDepthChecking(depthHo*** ho, int imrows, int imcols);
 	/* * \brief void interKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols): 
          * *         inter-keyframe depth-checking, smoothing, and growing. */
         void InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols);
@@ -74,12 +74,12 @@ private:
         void GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th);
         void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th);
         void GetIntensityGradient(cv::Mat im, float* g);
-        void PixelNeighborSuppport(const depthHo** H, int x, int y, std::vector<depthHo>* support);
-        void PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector<std::vector<depthHo> >* support);
+        void PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support);
+        void PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support);
         void GetIntensityGradient_D(const cv::Mat& im, float* q);				
         void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p);
-	bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val);
-	void GetFusion(const std::vector<depthHo>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);
+	bool ChiTest(const depthHo*& ha, const depthHo*& hb, float* chi_val);
+	void GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);
 };
 
 #endif
