@@ -253,7 +253,7 @@ void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo*
         GetFusion(compatible_ho, dist, &chi);
     }
 } 
-
+/*
 void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM::KeyFrame* currentKf, depthHo*** h) {//int imrows, int imcols) {
         std::vector<ORB_SLAM::KeyFrame*> neighbors;
         
@@ -342,13 +342,14 @@ void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM:
         }
     }
 } 
-/*
+*/
+
 
 
 ////////////////////////
 // Utility functions
 ////////////////////////
-
+/*
 void ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {
   cv::Mat image = kf->GetImage();
 
@@ -385,7 +386,7 @@ void ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float us
   dh.depth = inv_pixel_depth;
   dh.sigma = sigma_depth;
 }
-
+*/
 void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
 	
   cv::Scharr(image, gradx, CV_16S, 1, 0);
@@ -399,13 +400,14 @@ void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::
   *grady = absgrady;
   cv::addWeighted(absgradx, 0.5, absgrady, 0.5, grad, 0);
 }
-
+/*
 void GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th){
   float valuex = gradx.at<float>(x,y);
   float valuey = grady.at<float>(x,y);
   *th =  cv::fastAtan2(gradx,grady);
 }
-
+*/
+/*
 //might be a good idea to store these when they get calculated during ORB-SLAM.
 void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {
   std::vector<cv::KeyPoint> vKPU1 = k1->GetKeyPointsUn();
@@ -493,7 +495,8 @@ void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* 
     *th = rotHist[size/2];
   }
 }
-
+*/
+/*
 void PixelNeighborSupport(const depthHo*** H, int px, int py, std::vector<depthHo>* support) {
     support->clear();
     for (int x = px - 1; x <= px + 1; x++) {
@@ -505,7 +508,8 @@ void PixelNeighborSupport(const depthHo*** H, int px, int py, std::vector<depthH
         }
     }
 }
-
+*/
+/*
 void PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector<std::vector<depthHo>* support) {
     support->clear();
     for (int x = px - 1; x <= px + 1; x++) {
@@ -525,12 +529,14 @@ void PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector
         }
     }
 }
-
+*/
+/*
 void GetIntensityGradient_D(const cv::Mat& ImGrad, float* q) {
     float grad_d = (ImGrad.at<float>(uplusone,vplusone) - ImGrad.at<float>(uminone,vminone))/2;
     *q = grad_d;
 } 
-
+*/
+/*
 void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {
     const float fx = kF->fx;
     const float cx = kF->cx;
@@ -545,14 +551,16 @@ void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const 
     float depthp = (R[2]*Xp.at<float>(ucx,vcx)-fx*R[0]*Xp)/(-T[2][ucx][vcx]+fx*T[0]);
     *p = depthp;
 } 
-
+*/
+/*
 bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {
     float chi_test = (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma) + (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma);
     if (chi_val)
         *chi_val = chi_test;
     return (chi_test < 5.99);
 } 
-
+*/
+/*
 void GetFusion(const vector<depthHo>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {
     hypothesis->depth = 0;
     hypothesis->sigma = 0;
