@@ -69,6 +69,8 @@ public:
 
 private:
 
+        void GetTR(const ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r);
+        void GetParameterization(const ORB_SLAM::KeyFrame* kf1, const ORB_SLAM::KeyFrame* kf2, const int x, const int y, float* a, float* b, float* c);
         void ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh);
         void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad);
         void GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th);
@@ -77,7 +79,8 @@ private:
         void PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support);
         void PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support);
         void GetIntensityGradient_D(const cv::Mat& im, float* q);				
-        void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p);
+        void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF1, const ORB_SLAM::KeyFrame* kF2, int x, int y, float *p);
+        //void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p);
 	bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val);
 	void GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);
 };

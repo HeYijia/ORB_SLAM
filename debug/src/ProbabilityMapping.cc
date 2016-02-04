@@ -27,16 +27,16 @@
 
 ProbabilityMapping::ProbabilityMapping() {}
 void ProbabilityMapping::ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {}
-void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {}
-void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
+//void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {}
+//void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
 void ProbabilityMapping::GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {}
 void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support) {}
 void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
 void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
-void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {}
-bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
-void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
+//void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {}
+//bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
+//void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
 
 //void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho);
 void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth) {}
@@ -387,26 +387,28 @@ void ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float us
   dh.sigma = sigma_depth;
 }
 */
-void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
-	
-  cv::Scharr(image, gradx, CV_16S, 1, 0);
-  cv::Scharr(image, grady, CV_16S, 0, 1);
+void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
+  cv::Scharr(image, *gradx, CV_16S, 1, 0);
+  cv::Scharr(image, *grady, CV_16S, 0, 1);
 	
   cv::Mat absgradx, absgrady;
 
-  cv::convertScaleAbs(gradx, absgradx);
-  cv::convertScaleAbs(grady, absgrady);
+  cv::convertScaleAbs(*gradx, absgradx);
+  cv::convertScaleAbs(*grady, absgrady);
+  
   *gradx = absgradx;
   *grady = absgrady;
-  cv::addWeighted(absgradx, 0.5, absgrady, 0.5, grad, 0);
+
+  cv::addWeighted(absgradx, 0.5, absgrady, 0.5, 0, *grad);
 }
-/*
-void GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th){
+
+void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th){
   float valuex = gradx.at<float>(x,y);
   float valuey = grady.at<float>(x,y);
-  *th =  cv::fastAtan2(gradx,grady);
+  
+  *th =  cv::fastAtan2(valuex, valuey);
 }
-*/
+
 /*
 //might be a good idea to store these when they get calculated during ORB-SLAM.
 void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {
@@ -497,7 +499,7 @@ void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* 
 }
 */
 /*
-void PixelNeighborSupport(const depthHo*** H, int px, int py, std::vector<depthHo>* support) {
+void ProbabilityMapping::PixelNeighborSupport(const depthHo*** H, int px, int py, std::vector<depthHo>* support) {
     support->clear();
     for (int x = px - 1; x <= px + 1; x++) {
         for (int y = py - 1; y <= py + 1; y++) {
@@ -510,7 +512,7 @@ void PixelNeighborSupport(const depthHo*** H, int px, int py, std::vector<depthH
 }
 */
 /*
-void PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector<std::vector<depthHo>* support) {
+void ProbabilityMapping::PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector<std::vector<depthHo>* support) {
     support->clear();
     for (int x = px - 1; x <= px + 1; x++) {
         for (int y = py - 1; y <= py + 1; y++) {
@@ -531,53 +533,81 @@ void PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector
 }
 */
 /*
-void GetIntensityGradient_D(const cv::Mat& ImGrad, float* q) {
+void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& ImGrad, float* q) {
     float grad_d = (ImGrad.at<float>(uplusone,vplusone) - ImGrad.at<float>(uminone,vminone))/2;
     *q = grad_d;
 } 
 */
-/*
-void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {
-    const float fx = kF->fx;
-    const float cx = kF->cx;
 
-    cv::Mat K = kF->GetCalibrationMatrix();
+void ProbabilityMapping::GetTR(const ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r) {
+    cv::Mat Rcw2 = kf->GetRotation();
+    cv::Mat Rwc2 = Rcw2.t();
+    cv::Mat tcw2 = kf->GetTranslation();
+    cv::Mat Tcw2(3,4,CV_32F);
+    Rcw2.copyTo(Tcw2.colRange(0,3));
+    tcw2.copyTo(Tcw2.col(3));
+    
+    *t = Tcw2;
+    *r = Rcw2;
+}
 
-    cv::Mat Xp = K*Im;
+void ProbabilityMapping::GetParameterization(const ORB_SLAM::KeyFrame* kf1, const ORB_SLAM::KeyFrame* kf2, const int x, const int y, float* a, float* b, float* c) {
+    // compute fundamental matrix of the two keyFrames
+    cv::Mat F12 = LocalMapping::ComputeF12(kf1, kf2);
+    
+    // parameterization of the fundamental matrix (function of horizontal coordinate)
+    // could probably use the opencv built in function instead
+    *a = x*F12.at<float>(0,0)+y*F12.at<float>(1,0)+F12.at<float>(2,0);
+    *b = x*F12.at<float>(0,1)+y*F12.at<float>(1,1)+F12.at<float>(2,1);
+    *c = x*F12.at<float>(0,2)+y*F12.at<float>(1,2)+F12.at<float>(2,2);
+}
 
-    int ucx = u - cx;
+// Equation (8)
+void ProbabilityMapping::GetPixelDepth(const float a, const float b, const float c, const int px, const cv::Mat& im, const ORB_SLAM::KeyFrame* kf 
+        
+    cv::Mat rcw(3,4,CV_32F);
+    cv::Mat tcw(3,4,CV_32F);
+    GetTR(kf, &rcw, &tcw);
+    
+    cv::Mat k = kf->GetCalibrationMatrix();
+    cv::Mat xp = k*Im;
+
+    float fx = kf->fx;
+    float cx = kf->cx;
+
+    int ucx = px - cx;
     int vcx = (a/b)*ucx + (c/b);
     
-    float depthp = (R[2]*Xp.at<float>(ucx,vcx)-fx*R[0]*Xp)/(-T[2][ucx][vcx]+fx*T[0]);
-    *p = depthp;
+    *p = (rcw[2] * xp.at<float>(ucx,vcx) - fx * rcw[0] * xp) / (-tcw[2][ucx][vcx] + fx * tcw[0]);
 } 
-*/
-/*
-bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {
+
+bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {
     float chi_test = (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma) + (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma);
     if (chi_val)
         *chi_val = chi_test;
     return (chi_test < 5.99);
 } 
-*/
-/*
-void GetFusion(const vector<depthHo>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {
+
+void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& compatible_ho, depthHo* hypothesis, float* min_sigma) {
     hypothesis->depth = 0;
     hypothesis->sigma = 0;
+    
     float temp_min_sigma = 0;
     float pjsj =0; // numerator
     float rsj =0; // denominator
-    for (int j = 0; j < best_compatible_ho.size(); j++) {
-        pjsj += (best_compatible_ho[j].depth / (best_compatible_ho[j].sigma * best_compatible_ho[j].sigma));
-        rsj += (1 / (best_compatible_ho[j].sigma * best_compatible_ho[j].sigma));
-        if (best_compatible_ho[j].sigma * best_compatible_ho[j].sigma < temp_min_sigma * temp_min_sigma) {
-            temp_min_sigma = best_compatible_ho[j].sigma;
+    
+    for (size_t j = 0; j < compatible_ho.size(); j++) {
+        pjsj += (compatible_ho[j]->depth / (compatible_ho[j]->sigma * compatible_ho[j]->sigma));
+        rsj += (1 / (compatible_ho[j]->sigma * compatible_ho[j]->sigma));
+        if (compatible_ho[j]->sigma * compatible_ho[j]->sigma < temp_min_sigma * temp_min_sigma) {
+            temp_min_sigma = compatible_ho[j]->sigma;
         }
     }
+    
     hypothesis->depth = pjsj / rsj;
     hypothesis->sigma = sqrt(1 / rsj);
     if (min_sigma) {
         *min_sigma = temp_min_sigma;
     }
 } 
-*/
+
