@@ -34,13 +34,13 @@ void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::v
 void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
 void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
 void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {}
-bool ProbabilityMapping::ChiTest(const depthHo*& ha, const depthHo*& hb, float* chi_val) { return true; }
+bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
 void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
 
 //void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho);
 void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth) {}
 void ProbabilityMapping::EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh) {}
-void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {}
+//void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {}
 //void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols) {}
 void ProbabilityMapping::InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
 
@@ -222,35 +222,37 @@ void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo*** ho, int imrows, i
         }
     }
 } 
-/*
-void InverseDepthHypothesisFusion(const vector<depthHo> H, depthHo* dist) {
+
+void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo*>& h, depthHo* dist) {
     dist->depth = 0;
     dist->sigma = 0;
 
-    vector<depthHo> best_compatible_ho;
+    std::vector<depthHo*> compatible_ho;
+    std::vector<depthHo*> compatible_ho_temp;
+    float chi = 0;
     
-    for (int a=0; a < H.size(); a++) {
-        vector<depthHo> compatible_ho;
+    for (size_t a=0; a < h.size(); a++) {
+        compatible_ho_temp.clear();
         
-        for (int b=0; b < H.size(); b++) {
+        for (size_t b=0; b < h.size(); b++) {
             // test if the hypotheses a and b are compatible
-            if (chi_test(H[a], H[b], NULL)) {
-                compatible_ho.push_back(H[b]); 
+            if (ChiTest(*(h[a]), *(h[b]), &chi)) {
+                compatible_ho_temp.push_back(h[b]); 
             }
         }
         // test if hypothesis 'a' has the required support
-        if (compatible.size()-1 >= lambdaN && compatible.size() > best_compatible_depth.size()) {
-            compatible_ho.push_back(H[a]); 
-            best_compatible_ho = compatible_ho;
+        if (compatible_ho_temp.size()-1 >= lambdaN && compatible_ho_temp.size() > compatible_ho.size()) {
+            compatible_ho_temp.push_back(h[a]); 
+            compatible_ho = compatible_ho_temp;
         }
     }
 
     // calculate the parameters of the inverse depth distribution by fusing hypotheses
-    if (best_compatible_ho.size() >= lambdaN) {
-        GetFusion(best_compatible_ho, &dist, NULL);
+    if (compatible_ho.size() >= lambdaN) {
+        GetFusion(compatible_ho, dist, &chi);
     }
 } 
-
+/*
 void InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** H, int imrows, int imcols) {
         std::vector<ORB_SLAM::KeyFrame*> neighbors;
         // option1: could just be the best covisibility keyframes
