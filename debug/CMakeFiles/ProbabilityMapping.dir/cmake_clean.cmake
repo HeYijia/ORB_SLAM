@@ -1,6 +1,7 @@
 FILE(REMOVE_RECURSE
   "CMakeFiles/ProbabilityMapping.dir/src/main.o"
   "CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o"
+  "CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o"
   "CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o"
   "bin/ProbabilityMapping.pdb"
   "bin/ProbabilityMapping"

@@ -127,6 +127,21 @@ src/KeyFrame.s:
 .PHONY : src/KeyFrame.s
 
 # target to build an object file
+src/LocalMapping.o:
+	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o
+.PHONY : src/LocalMapping.o
+
+# target to preprocess a source file
+src/LocalMapping.i:
+	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i
+.PHONY : src/LocalMapping.i
+
+# target to generate assembly for a file
+src/LocalMapping.s:
+	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s
+.PHONY : src/LocalMapping.s
+
+# target to build an object file
 src/ProbabilityMapping.o:
 	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o
 .PHONY : src/ProbabilityMapping.o
@@ -168,6 +183,9 @@ help:
 	@echo "... src/KeyFrame.o"
 	@echo "... src/KeyFrame.i"
 	@echo "... src/KeyFrame.s"
+	@echo "... src/LocalMapping.o"
+	@echo "... src/LocalMapping.i"
+	@echo "... src/LocalMapping.s"
 	@echo "... src/ProbabilityMapping.o"
 	@echo "... src/ProbabilityMapping.i"
 	@echo "... src/ProbabilityMapping.s"

@@ -24,26 +24,27 @@
 
 #include "ProbabilityMapping.h"
 #include "KeyFrame.h"
+#include "LocalMapping.h"
 
 ProbabilityMapping::ProbabilityMapping() {}
-void ProbabilityMapping::ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {}
+void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {}
 //void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {}
 //void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
-void ProbabilityMapping::GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {}
+void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {}
 void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support) {}
 void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
 void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
-//void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, const ORB_SLAM::KeyFrame* kF, int u, float *p) {}
+//void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p) {}
 //bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
 //void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
 
 //void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho);
 void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth) {}
-void ProbabilityMapping::EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh) {}
+void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame *kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh) {}
 //void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {}
 //void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols) {}
-//void ProbabilityMapping::InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
+//void ProbabilityMapping::InterKeyFrameDepthChecking(ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
 
 
 
@@ -93,7 +94,7 @@ void StereoSearchConstraints(ORB_SLAM::KeyFrame* kf, float* min_depth, float* ma
   *min_depth = mean(acc) - 2*sqrt(variance(acc));
 }
 	        
-void EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh){
+void EpipolarSearch(ORB_SLAM::KeyFrame *kf1, const KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh){
   cv::Mat original = kf1->GetImage();
   cv::Mat pixel = original.at<cv::Mat>(x,y);
 
@@ -350,7 +351,7 @@ void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM:
 // Utility functions
 ////////////////////////
 /*
-void ComputeInvDepthHypothesis(const ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {
+void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh) {
   cv::Mat image = kf->GetImage();
 
   cv::Mat frame_rot = kf->GetRotation();
@@ -411,7 +412,7 @@ void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gra
 
 /*
 //might be a good idea to store these when they get calculated during ORB-SLAM.
-void GetInPlaneRotation(const ORB_SLAM::KeyFrame* k1, const ORB_SLAM::KeyFrame* k2, float* th) {
+void GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {
   std::vector<cv::KeyPoint> vKPU1 = k1->GetKeyPointsUn();
   DBoW2::FeatureVector vFeatVec1 = k1->GetFeatureVector();
   std::vector<MapPoint*> vMapPoints1 = k1->GetMapPointMatches();
@@ -539,7 +540,8 @@ void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& ImGrad, float* q)
 } 
 */
 
-void ProbabilityMapping::GetTR(const ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r) {
+void ProbabilityMapping::GetTR(ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r) {
+    
     cv::Mat Rcw2 = kf->GetRotation();
     cv::Mat Rwc2 = Rcw2.t();
     cv::Mat tcw2 = kf->GetTranslation();
@@ -551,10 +553,7 @@ void ProbabilityMapping::GetTR(const ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat
     *r = Rcw2;
 }
 
-void ProbabilityMapping::GetParameterization(const ORB_SLAM::KeyFrame* kf1, const ORB_SLAM::KeyFrame* kf2, const int x, const int y, float* a, float* b, float* c) {
-    // compute fundamental matrix of the two keyFrames
-    cv::Mat F12 = LocalMapping::ComputeF12(kf1, kf2);
-    
+void ProbabilityMapping::GetParameterization(const cv::Mat& F12, const int x, const int y, float* a, float* b, float* c) {
     // parameterization of the fundamental matrix (function of horizontal coordinate)
     // could probably use the opencv built in function instead
     *a = x*F12.at<float>(0,0)+y*F12.at<float>(1,0)+F12.at<float>(2,0);
@@ -563,22 +562,23 @@ void ProbabilityMapping::GetParameterization(const ORB_SLAM::KeyFrame* kf1, cons
 }
 
 // Equation (8)
-void ProbabilityMapping::GetPixelDepth(const float a, const float b, const float c, const int px, const cv::Mat& im, const ORB_SLAM::KeyFrame* kf 
+void ProbabilityMapping::GetPixelDepth(const float a, const float b, const float c, const int px, const cv::Mat& im, ORB_SLAM::KeyFrame* kf, float* p) {
         
     cv::Mat rcw(3,4,CV_32F);
     cv::Mat tcw(3,4,CV_32F);
     GetTR(kf, &rcw, &tcw);
     
     cv::Mat k = kf->GetCalibrationMatrix();
-    cv::Mat xp = k*Im;
+    cv::Mat xp = k*im;
 
     float fx = kf->fx;
     float cx = kf->cx;
 
     int ucx = px - cx;
-    int vcx = (a/b)*ucx + (c/b);
+    //int vcx = (a/b)*ucx + (c/b);
     
-    *p = (rcw[2] * xp.at<float>(ucx,vcx) - fx * rcw[0] * xp) / (-tcw[2][ucx][vcx] + fx * tcw[0]);
+    *p = (((rcw.row(2) * xp) * ucx) - (fx * (rcw.row(0) * xp))) / ((-tcw.at<float>(2,0) * ucx) + (fx * tcw.at<float>(0,0)));
+    //*p = (rcw[2] * xp.at<float>(ucx,vcx) - fx * rcw[0] * xp) / (-tcw[2][ucx][vcx] + fx * tcw[0]);
 } 
 
 bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {

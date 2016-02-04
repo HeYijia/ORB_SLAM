@@ -1,0 +1,4 @@
+bin/
+*CMake*
+
+!CMakeLists.txt
