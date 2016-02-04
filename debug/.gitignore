@@ -1,0 +1,6 @@
+n/
+*CMake*
+*.cmake
+manifest.xml
+
+!CMakeLists.txt

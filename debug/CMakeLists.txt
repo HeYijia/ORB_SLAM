@@ -4,7 +4,8 @@ find_package( OpenCV REQUIRED )
 add_executable( ${PROJECT_NAME}
     src/main.cc
     src/KeyFrame.cc
-    src/ProbabilityMapping.cc 
+    src/ProbabilityMapping.cc
+    src/LocalMapping.cc
 )
 target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

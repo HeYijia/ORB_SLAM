@@ -39,10 +39,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/acceber/projects/eecs395/ORB_SLAM/debug
+CMAKE_SOURCE_DIR = /home/josh/Workspace/Scanner3D/ORB_SLAM/debug
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/acceber/projects/eecs395/ORB_SLAM/debug
+CMAKE_BINARY_DIR = /home/josh/Workspace/Scanner3D/ORB_SLAM/debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -69,9 +69,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -127,6 +127,21 @@ src/KeyFrame.s:
 .PHONY : src/KeyFrame.s
 
 # target to build an object file
+src/LocalMapping.o:
+	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o
+.PHONY : src/LocalMapping.o
+
+# target to preprocess a source file
+src/LocalMapping.i:
+	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i
+.PHONY : src/LocalMapping.i
+
+# target to generate assembly for a file
+src/LocalMapping.s:
+	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s
+.PHONY : src/LocalMapping.s
+
+# target to build an object file
 src/ProbabilityMapping.o:
 	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o
 .PHONY : src/ProbabilityMapping.o
@@ -168,6 +183,9 @@ help:
 	@echo "... src/KeyFrame.o"
 	@echo "... src/KeyFrame.i"
 	@echo "... src/KeyFrame.s"
+	@echo "... src/LocalMapping.o"
+	@echo "... src/LocalMapping.i"
+	@echo "... src/LocalMapping.s"
 	@echo "... src/ProbabilityMapping.o"
 	@echo "... src/ProbabilityMapping.i"
 	@echo "... src/ProbabilityMapping.s"
