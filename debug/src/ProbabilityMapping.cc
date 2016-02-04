@@ -16,6 +16,7 @@
  * =====================================================================================
  */
 
+#include <cmath>
 #include <opencv2/opencv.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/variance.hpp>
@@ -42,7 +43,7 @@ void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame *kf, float* 
 void ProbabilityMapping::EpipolarSearch(const ORB_SLAM::KeyFrame *kf1, const ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh) {}
 //void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {}
 //void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols) {}
-void ProbabilityMapping::InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
+//void ProbabilityMapping::InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
 
 
 
@@ -252,54 +253,65 @@ void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo*
         GetFusion(compatible_ho, dist, &chi);
     }
 } 
-/*
-void InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** H, int imrows, int imcols) {
+
+void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM::KeyFrame* currentKf, depthHo*** h) {//int imrows, int imcols) {
         std::vector<ORB_SLAM::KeyFrame*> neighbors;
+        
         // option1: could just be the best covisibility keyframes
-        neighbors = Kf->GetBestCovisibilityKeyFrames(covisN);
+        neighbors = currentKf->GetBestCovisibilityKeyFrames(covisN);
+        
         // option2: could be found in one of the LocalMapping SearchByXXX() methods
-        ORB_SLAM::LocalMapping::SearchInNeighbors(); //mpCurrentKeyFrame->updateConnections()...AddConnection()...UpdateBestCovisibles()...
-        ORB_SLAM::LocalMapping::mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(covisN); //mvpOrderedConnectedKeyFrames()
+        //ORB_SLAM::LocalMapping::SearchInNeighbors(); //mpCurrentKeyFrame->updateConnections()...AddConnection()...UpdateBestCovisibles()...
+        //ORB_SLAM::LocalMapping::mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(covisN); //mvpOrderedConnectedKeyFrames()
         
         // for each pixel of keyframe_i, project it onto each neighbor keyframe keyframe_j
         // and propagate inverse depth
-        for (int px = 0; px < imrows; px++) {
-            for (int py = 0; py < imcols; py++) {
-                if (H[px][py] == NULL) continue; 
-                float depthp = H[px][py].depth;
+        for (int px = 0; px < im.rows; px++) {
+            for (int py = 0; py < im.cols; py++) {
+                if (h[px][py] == NULL) continue; 
+                
+                float depthp = h[px][py]->depth;
                 int compatible_neighbor_keyframes_count = 0; // count of neighboring keyframes in which there is at least one compatible pixel
-	        for(int j=0; j<neighbors.size(); j++){ 
+	        
+                for(size_t j=0; j<neighbors.size(); j++){ 
 		    ORB_SLAM::KeyFrame* pKFj = neighbors[j];
+                    
                     // calibration matrix
-	            cv::Mat Kj = pKFj -> GetCalibrationMatrix;
-		    cv::Mat Xp = Kj*image;
+	            cv::Mat Kj = currentKf->GetCalibrationMatrix();
+		    cv::Mat Xp = Kj*im;
+                    
+                    // Tcw_ matrix FIXME: check if this is correct
+                    cv::Mat Tcw_ = currentKf->GetTranslation(); 
                     // rotation matrix
                     cv::Mat Rcwj = Tcw_.row(2).colRange(0,3);
                     Rcwj = Rcwj.t();
+                    
                     // translation matrix
-                    cv::Mat tcwj = pKF2->GetTranslation();
+                    cv::Mat tcwj = pKFj->GetTranslation();
                     cv::Mat Tcwj(3,4,CV_32F);
                     Rcwj.copyTo(Tcwj.colRange(0,3));
                     tcwj.copyTo(Tcwj.col(3));
                     
                     // compute the projection matrix to map 3D point from original image to 2D point in neighbor keyframe
                     // Eq (12)
-                    xj = (Kj * Rcwj * (1 / depthp) * xp) + Kj * Tcwj; 
-                    float depthj = depthp / (Rcwj[2] * xp + depthp * Tcwj[2]); 
+                    cv::Mat Xj = (Kj * Rcwj * (1 / depthp) * Xp) + Kj * Tcwj; 
+                    float depthj = depthp / (Rcwj.row(2).colRange(0,3) * Xp + depthp * Tcwj.row(2).colRange(0,3)); 
 
                     // find the (float) coordinates of the new point in keyframe_j
-                    cv::Mat xyzj = xj * cv::Mat(px, py, depthp);
-                    float xj = xyzj[0];  
-                    float yj = xyzj[1]; 
+                    cv::Mat pointKfj = Xj * cv::Mat(px, py, depthp);
+                    float xj = pointKfj.at<float>(0,0); 
+                    float yj = pointKfj.at<float>(1,0);
                     
                     int compatible_points_count = 0; // count of compatible neighbor pixels
                     std::vector<cv::Point> compatible_points;
                     // look in 4-neighborhood pixel p_j,n around xj for compatible inverse depth
-                    for (int nj = floor(xj); nj <= nj + 1; nj++) {
-                        for (int ny = floor(yj); ny < ny + 1; ny++) {
-                            if (H[nx][ny] == NULL) continue;
-                            float depthjn = H[nx][ny].depth; 
-                            float sigmajn = H[nx][ny].sigma; 
+                    int xj_floor = floor(xj);
+                    int yj_floor = floor(yj);
+                    for (int nx = xj_floor; nx <= xj_floor + 1; nx++) {
+                        for (int ny = yj_floor; ny < yj_floor + 1; ny++) {
+                            if (h[nx][ny] == NULL) continue;
+                            float depthjn = h[nx][ny]->depth; 
+                            float sigmajn = h[nx][ny]->sigma; 
                             // Eq (13)
                             float test = (depthp - depthjn) * (depthp - depthjn) / (sigmajn * sigmajn);
                             if (test < 3.84) {
@@ -314,23 +326,23 @@ void InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** H
                         compatible_neighbor_keyframes_count++;
                         float depthp_star = 1000;
                         float sum_depth = 0;
-                        for (int p; p < compatible_points.size(); p++) {
-                            float depthjn = H[compatible_points[p].x][compatible_points[p].y].depth;
-                            float sigmajn = H[compatible_points[p].x][compatible_points[p].y].sigma;
+                        for (size_t p; p < compatible_points.size(); p++) {
+                            float depthjn = h[compatible_points[p].x][compatible_points[p].y]->depth;
+                            float sigmajn = h[compatible_points[p].x][compatible_points[p].y]->sigma;
                             // equation (14)
-                            sum_depth += pow((depthjn - depthp * Rcwj[2] * xp * Tcwj[2]), 2) / (pow(depthjn, 4) * pow(sigmajn, 2)); 
+                            sum_depth += pow((depthjn - depthp * Rcwj.row(3).colRange(0,3) * Xp * Tcwj.row(2).colRange(0,3)), 2) / (pow(depthjn, 4) * pow(sigmajn, 2)); 
                         } 
                     } 
                 }
                 // don't retain the inverse depth distribution of this pixel if not enough support in neighbor keyframes
                 if (compatible_neighbor_keyframes_count < lambdaN) {
-                    H[px][py] = NULL;
+                    h[px][py] = NULL;
                 }
             }
         }
     }
 } 
-
+/*
 
 
 ////////////////////////

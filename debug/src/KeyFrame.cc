@@ -27,4 +27,9 @@ std::vector<float> GetAllPointDepths(int q = 2) {
     return v;
 }
 
+cv::Mat KeyFrame::GetCalibrationMatrix() const {
+    cv::Mat mK;
+    return mK.clone();
+}
+
 }

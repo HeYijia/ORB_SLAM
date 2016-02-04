@@ -16,6 +16,7 @@ public:
     std::vector<float> GetAllPointDepths(int q = 2); 
     cv::Mat GetRotation();
     cv::Mat GetTranslation();
+    cv::Mat GetCalibrationMatrix() const;
 };
 }
 #endif

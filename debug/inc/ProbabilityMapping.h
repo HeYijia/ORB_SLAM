@@ -65,7 +65,7 @@ public:
         void IntraKeyFrameDepthChecking(depthHo*** ho, int imrows, int imcols);
 	/* * \brief void interKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols): 
          * *         inter-keyframe depth-checking, smoothing, and growing. */
-        void InterKeyFrameDepthChecking(const ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols);
+        void InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM::KeyFrame* currentKF, depthHo*** h);//int imrows, int imcols);
 
 private:
 
