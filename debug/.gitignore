@@ -2,5 +2,7 @@ n/
 *CMake*
 *.cmake
 manifest.xml
+bin/
+*CMake*
 
 !CMakeLists.txt

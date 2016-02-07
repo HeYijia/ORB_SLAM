@@ -17,6 +17,9 @@ public:
     cv::Mat GetRotation();
     cv::Mat GetTranslation();
     cv::Mat GetCalibrationMatrix() const;
+
+    float fx;
+    float cx;
 };
 }
 #endif
