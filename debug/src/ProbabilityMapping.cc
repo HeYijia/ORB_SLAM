@@ -34,7 +34,7 @@ void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::Ke
 void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support) {}
 void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
-void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
+//void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
 //void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p) {}
 //bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
 //void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
@@ -534,12 +534,14 @@ void ProbabilityMapping::PixelNeighborNeighborSupport(const depthHo** H, int px,
     }
 }
 */
-/*
-void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& ImGrad, float* q) {
-    float grad_d = (ImGrad.at<float>(uplusone,vplusone) - ImGrad.at<float>(uminone,vminone))/2;
-    *q = grad_d;
+
+void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& ImGrad, float a, float b, float c, int px, float* q) {
+    int uplusone = px + 1; 
+    int vplusone = (a/b)*uplusone + (c/b);
+    int uminone = px - 1; 
+    int vminone = (a/b)*uminone + (c/b);
+    *q = (ImGrad.at<float>(uplusone,vplusone) - ImGrad.at<float>(uminone,vminone))/2;
 } 
-*/
 
 void ProbabilityMapping::GetTR(ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r) {
     
@@ -561,26 +563,54 @@ void ProbabilityMapping::GetParameterization(const cv::Mat& F12, const int x, co
     *b = x*F12.at<float>(0,1)+y*F12.at<float>(1,1)+F12.at<float>(2,1);
     *c = x*F12.at<float>(0,2)+y*F12.at<float>(1,2)+F12.at<float>(2,2);
 }
+//FIXME: Xp = K-1 * xp (below Equation 8)
+void ProbabilityMapping::GetXp(const cv::Mat& K, const cv::Mat& Im, int x, int y, cv::Mat* Xp) {
+    // this is what we've been currently doing:
+    //*Xp = K * Im;
+    *Xp = K.inv() * Im;
+
+    // this is another interpretation:
+    //cv::Mat Kinv = K.inv();
+    //cv::Mat xp(1,2,CV_32F);
+    
+    //xp.at<float>(1,0) = x;
+    //xp.at<float>(2,0) = y;
+    
+    //*Xp = Kinv * xp;
+}
 
 /*  
 // Equation (8)
-oid ProbabilityMapping::GetPixelDepth(const float a, const float b, const float c, const int px, const cv::Mat& im, ORB_SLAM::KeyFrame* kf, float* p) {
+void ProbabilityMapping::GetPixelDepth(const float a, const float b, const float c, int px, int py, const cv::Mat& im, ORB_SLAM::KeyFrame* kf, float* p) {
         
-    cv::Mat rcw(3,4,CV_32F);
-    cv::Mat tcw(3,4,CV_32F);
-    GetTR(kf, &rcw, &tcw);
-    
-    cv::Mat k = kf->GetCalibrationMatrix();
-    cv::Mat xp = k*im;
-
     float fx = kf->fx;
     float cx = kf->cx;
 
     int ucx = px - cx;
     //int vcx = (a/b)*ucx + (c/b);
+
+    cv::Mat rcw = kf->GetRotation();
+    cv::Mat tcw = kf->GetTranslation();
     
-    *p = (((rcw.row(2) * xp) * ucx) - (fx * (rcw.row(0) * xp))) / ((-tcw.at<float>(2,0) * ucx) + (fx * tcw.at<float>(0,0)));
-    // *p = (rcw[2] * xp.at<float>(ucx,vcx) - fx * rcw[0] * xp) / (-tcw[2][ucx][vcx] + fx * tcw[0]);
+    cv::Mat xp;
+    GetXp(kf->GetCalibrationMatrix(), im, px, py, &xp); 
+
+    xp = cv::Mat(3,1,CV_32F); //should be a 3-element column matrix since it's being multiplied by a row of the rotation matrix to produce a float.
+    cv::Mat rji_x = cv::Mat(1,3,CV_32F); //rcw.row(0);
+    cv::Mat rji_z = cv::Mat(1,3,CV_32F); //rcw.row(2);
+
+    cv::Mat temp;
+    
+    temp = rji_z * xp;
+    double num1 = temp.at<float>(0,0);
+    temp = fx * (rji_x * xp);
+    double num2 = temp.at<float>(0,0);
+    double denom1 = -tcw.at<float>(2) * ucx;
+    double denom2 = fx * tcw.at<float>(0);
+    
+    *p = (num1 - num2) / (denom1 + denom2); 
+    //*p = (((rcw.row(2) * xp) * ucx) - (fx * (rcw.row(0) * xp))) / ((-tcw.at<float>(2,0) * ucx) + (fx * tcw.at<float>(0,0)));
+    //*p = (rcw[2] * xp.at<float>(ucx,vcx) - fx * rcw[0] * xp) / (-tcw[2][ucx][vcx] + fx * tcw[0]);
 } 
 */
 bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {

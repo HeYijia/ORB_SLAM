@@ -1,8 +1,7 @@
-n/
-*CMake*
-*.cmake
-manifest.xml
-bin/
-*CMake*
+*
+*/
 
+!.gitignore
+!src/
+!inc/
 !CMakeLists.txt
