@@ -380,24 +380,6 @@ void ProbabilityMapping::Equation14(depthHo*& dHjn, float& depthp, cv::Mat& xp, 
     *res = pow((dHjn->depth - (depthp * tempf) - tji_z) / (pow(dHjn->depth, 2) * dHjn->sigma), 1);
 }
 
-// the compatible pixels need to be organized by neighbor keyframe index so that the correct translation/rotation matrix can be used 
-// for each pixel j,n.
-void ProbabilityMapping::Equation14Sum(int j, std::vector<depthHo*>*& compatible_pixels, cv::Mat& xp, cv::Mat*& rji, cv::Mat*& tji, float dp, float* sum) {
-    float s = 0;
-    float tji_z;
-    float tempf;
-    cv::Mat tempm;
-    for (int k = 0; k < j; k++) {
-        tji_z = tji[k].at<float>(2);
-        for (size_t i = 0; i < compatible_pixels[k].size(); i++) {
-            tempm = rji[k].row(2) * xp;
-            tempf = tempm.at<float>(0,0);
-            s += pow((compatible_pixels[k][i]->depth - (dp * tempf) - tji_z) / (pow(compatible_pixels[k][i]->depth, 2) * compatible_pixels[k][i]->sigma) ,2);
-        }
-    }
-    *sum = s;
-}
-
 
 ////////////////////////
 // Utility functions

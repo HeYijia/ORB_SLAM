@@ -85,9 +85,7 @@ private:
         //void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p);
 	bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val);
 	void GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);
-        void Equation14Sum(int j, std::vector<depthHo*>*& compatible_pixels, cv::Mat& xp, cv::Mat*& rji, cv::Mat*& tji, float dp, float* sum);
         void Equation14(depthHo*& dHjn, float& depthp, cv::Mat& xp, cv::Mat& rji, cv::Mat& tji, float* res);
-        //void Equation14(depthHo* dHjn, float depthp, cv::Mat& xp, cv::Mat& rji, cv::Mat& tji, float* res);
 };
 
 #endif
