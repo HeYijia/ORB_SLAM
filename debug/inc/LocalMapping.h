@@ -10,7 +10,7 @@ class KeyFrame;
 
 class LocalMapping {
     public:
-    cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
+    static cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
 };
 
 }

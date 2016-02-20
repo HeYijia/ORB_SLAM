@@ -22,7 +22,7 @@ std::vector<KeyFrame*> KeyFrame::GetBestCovisibilityKeyFrames(const int &N) {
     return v;
 }
 
-std::vector<float> GetAllPointDepths(int q = 2) {
+std::vector<float> KeyFrame::GetAllPointDepths(int q) {
     std::vector<float> v;
     return v;
 }

@@ -35,10 +35,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/acceber/projects/eecs395/ORB_SLAM/debug
+CMAKE_SOURCE_DIR = /home/josh/Workspace/Scanner3D/ORB_SLAM/debug
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/acceber/projects/eecs395/ORB_SLAM/debug
+CMAKE_BINARY_DIR = /home/josh/Workspace/Scanner3D/ORB_SLAM/debug
 
 # Include any dependencies generated for this target.
 include CMakeFiles/ProbabilityMapping.dir/depend.make
@@ -51,17 +51,17 @@ include CMakeFiles/ProbabilityMapping.dir/flags.make
 
 CMakeFiles/ProbabilityMapping.dir/src/main.o: CMakeFiles/ProbabilityMapping.dir/flags.make
 CMakeFiles/ProbabilityMapping.dir/src/main.o: src/main.cc
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/ProbabilityMapping.dir/src/main.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/main.o -c /home/acceber/projects/eecs395/ORB_SLAM/debug/src/main.cc
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/main.o -c /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/main.cc
 
 CMakeFiles/ProbabilityMapping.dir/src/main.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProbabilityMapping.dir/src/main.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/acceber/projects/eecs395/ORB_SLAM/debug/src/main.cc > CMakeFiles/ProbabilityMapping.dir/src/main.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/main.cc > CMakeFiles/ProbabilityMapping.dir/src/main.i
 
 CMakeFiles/ProbabilityMapping.dir/src/main.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProbabilityMapping.dir/src/main.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/acceber/projects/eecs395/ORB_SLAM/debug/src/main.cc -o CMakeFiles/ProbabilityMapping.dir/src/main.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/main.cc -o CMakeFiles/ProbabilityMapping.dir/src/main.s
 
 CMakeFiles/ProbabilityMapping.dir/src/main.o.requires:
 .PHONY : CMakeFiles/ProbabilityMapping.dir/src/main.o.requires
@@ -74,17 +74,17 @@ CMakeFiles/ProbabilityMapping.dir/src/main.o.provides.build: CMakeFiles/Probabil
 
 CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o: CMakeFiles/ProbabilityMapping.dir/flags.make
 CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o: src/KeyFrame.cc
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o -c /home/acceber/projects/eecs395/ORB_SLAM/debug/src/KeyFrame.cc
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o -c /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/KeyFrame.cc
 
 CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/acceber/projects/eecs395/ORB_SLAM/debug/src/KeyFrame.cc > CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/KeyFrame.cc > CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.i
 
 CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/acceber/projects/eecs395/ORB_SLAM/debug/src/KeyFrame.cc -o CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/KeyFrame.cc -o CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.s
 
 CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o.requires:
 .PHONY : CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o.requires
@@ -95,42 +95,19 @@ CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o.provides: CMakeFiles/Probabilit
 
 CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o.provides.build: CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o
 
-CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o: CMakeFiles/ProbabilityMapping.dir/flags.make
-CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o: src/LocalMapping.cc
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_3)
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o -c /home/acceber/projects/eecs395/ORB_SLAM/debug/src/LocalMapping.cc
-
-CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/acceber/projects/eecs395/ORB_SLAM/debug/src/LocalMapping.cc > CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i
-
-CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/acceber/projects/eecs395/ORB_SLAM/debug/src/LocalMapping.cc -o CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s
-
-CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires:
-.PHONY : CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires
-
-CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires
-	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides.build
-.PHONY : CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides
-
-CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides.build: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o
-
 CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o: CMakeFiles/ProbabilityMapping.dir/flags.make
 CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o: src/ProbabilityMapping.cc
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_4)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_3)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o -c /home/acceber/projects/eecs395/ORB_SLAM/debug/src/ProbabilityMapping.cc
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o -c /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/ProbabilityMapping.cc
 
 CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/acceber/projects/eecs395/ORB_SLAM/debug/src/ProbabilityMapping.cc > CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.i
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/ProbabilityMapping.cc > CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.i
 
 CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/acceber/projects/eecs395/ORB_SLAM/debug/src/ProbabilityMapping.cc -o CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.s
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/ProbabilityMapping.cc -o CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.s
 
 CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o.requires:
 .PHONY : CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o.requires
@@ -141,20 +118,43 @@ CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o.provides: CMakeFiles/
 
 CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o.provides.build: CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o
 
+CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o: CMakeFiles/ProbabilityMapping.dir/flags.make
+CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o: src/LocalMapping.cc
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles $(CMAKE_PROGRESS_4)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o"
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o -c /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/LocalMapping.cc
+
+CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/LocalMapping.cc > CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.i
+
+CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/src/LocalMapping.cc -o CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.s
+
+CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires:
+.PHONY : CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires
+
+CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires
+	$(MAKE) -f CMakeFiles/ProbabilityMapping.dir/build.make CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides.build
+.PHONY : CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides
+
+CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.provides.build: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o
+
 # Object files for target ProbabilityMapping
 ProbabilityMapping_OBJECTS = \
 "CMakeFiles/ProbabilityMapping.dir/src/main.o" \
 "CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o" \
-"CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o" \
-"CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o"
+"CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o" \
+"CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o"
 
 # External object files for target ProbabilityMapping
 ProbabilityMapping_EXTERNAL_OBJECTS =
 
 bin/ProbabilityMapping: CMakeFiles/ProbabilityMapping.dir/src/main.o
 bin/ProbabilityMapping: CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o
-bin/ProbabilityMapping: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o
 bin/ProbabilityMapping: CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o
+bin/ProbabilityMapping: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o
 bin/ProbabilityMapping: CMakeFiles/ProbabilityMapping.dir/build.make
 bin/ProbabilityMapping: /usr/lib/x86_64-linux-gnu/libopencv_videostab.so.2.4.8
 bin/ProbabilityMapping: /usr/lib/x86_64-linux-gnu/libopencv_video.so.2.4.8
@@ -195,8 +195,8 @@ CMakeFiles/ProbabilityMapping.dir/build: bin/ProbabilityMapping
 
 CMakeFiles/ProbabilityMapping.dir/requires: CMakeFiles/ProbabilityMapping.dir/src/main.o.requires
 CMakeFiles/ProbabilityMapping.dir/requires: CMakeFiles/ProbabilityMapping.dir/src/KeyFrame.o.requires
-CMakeFiles/ProbabilityMapping.dir/requires: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires
 CMakeFiles/ProbabilityMapping.dir/requires: CMakeFiles/ProbabilityMapping.dir/src/ProbabilityMapping.o.requires
+CMakeFiles/ProbabilityMapping.dir/requires: CMakeFiles/ProbabilityMapping.dir/src/LocalMapping.o.requires
 .PHONY : CMakeFiles/ProbabilityMapping.dir/requires
 
 CMakeFiles/ProbabilityMapping.dir/clean:
@@ -204,6 +204,6 @@ CMakeFiles/ProbabilityMapping.dir/clean:
 .PHONY : CMakeFiles/ProbabilityMapping.dir/clean
 
 CMakeFiles/ProbabilityMapping.dir/depend:
-	cd /home/acceber/projects/eecs395/ORB_SLAM/debug && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/acceber/projects/eecs395/ORB_SLAM/debug /home/acceber/projects/eecs395/ORB_SLAM/debug /home/acceber/projects/eecs395/ORB_SLAM/debug /home/acceber/projects/eecs395/ORB_SLAM/debug /home/acceber/projects/eecs395/ORB_SLAM/debug/CMakeFiles/ProbabilityMapping.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/josh/Workspace/Scanner3D/ORB_SLAM/debug && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/josh/Workspace/Scanner3D/ORB_SLAM/debug /home/josh/Workspace/Scanner3D/ORB_SLAM/debug /home/josh/Workspace/Scanner3D/ORB_SLAM/debug /home/josh/Workspace/Scanner3D/ORB_SLAM/debug /home/josh/Workspace/Scanner3D/ORB_SLAM/debug/CMakeFiles/ProbabilityMapping.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ProbabilityMapping.dir/depend
 
