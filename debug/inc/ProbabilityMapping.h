@@ -70,7 +70,7 @@ public:
 private:
 
         void GetTR(ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r);
-        void GetXp(const cv::Mat& K, const cv::Mat& Im, int x, int y, cv::Mat* Xp);
+        void GetXp(const cv::Mat& K, int x, int y, cv::Mat* Xp);
         void GetParameterization(const cv::Mat& F12, const int x, const int y, float* a, float* b, float* c);
         void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo& dh);
         void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad);
@@ -80,10 +80,13 @@ private:
         void PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support);
         void PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support);
         void GetIntensityGradient_D(const cv::Mat& ImGrad, float a, float b, float c, int px, float* q);
-        void GetPixelDepth(const float a, const float b, const float c, int px, int py, const cv::Mat& im, ORB_SLAM::KeyFrame* kf, float* p);
+        void GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, float* p);
         //void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p);
 	bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val);
 	void GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);
+        void Equation14Sum(int j, std::vector<depthHo*>*& compatible_pixels, cv::Mat& xp, cv::Mat*& rji, cv::Mat*& tji, float dp, float* sum);
+        void Equation14(depthHo*& dHjn, float& depthp, cv::Mat& xp, cv::Mat& rji, cv::Mat& tji, float* res);
+        //void Equation14(depthHo* dHjn, float depthp, cv::Mat& xp, cv::Mat& rji, cv::Mat& tji, float* res);
 };
 
 #endif

@@ -32,8 +32,8 @@ void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int p
 //void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
 void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {}
 void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
-void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support) {}
-void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
+//void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support) {}
+//void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
 //void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
 //void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p) {}
 //bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
@@ -185,12 +185,12 @@ void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo*** ho, int imrows, i
                 // potentially grow the reconstruction density
                 if (max_support >= 2) {
                     // assign this previous NULL depthHo the average depth and min sigma of its compatible neighbors
-                    depthHo* fusion;
+                    depthHo fusion;
                     float min_sigma;
 
-                    GetFusion(compatible_neighbor_neighbor_ho[max_support_index], fusion, &min_sigma);
+                    GetFusion(compatible_neighbor_neighbor_ho[max_support_index], &fusion, &min_sigma);
 
-                    ho_new[px][py]->depth = fusion->depth;
+                    ho_new[px][py]->depth = fusion.depth;
                     ho_new[px][py]->sigma = min_sigma;
                 }
 
@@ -254,97 +254,145 @@ void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo*
         GetFusion(compatible_ho, dist, &chi);
     }
 } 
-/*
-void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM::KeyFrame* currentKf, depthHo*** h) {//int imrows, int imcols) {
-        std::vector<ORB_SLAM::KeyFrame*> neighbors;
-        
-        // option1: could just be the best covisibility keyframes
-        neighbors = currentKf->GetBestCovisibilityKeyFrames(covisN);
-        
-        // option2: could be found in one of the LocalMapping SearchByXXX() methods
-        //ORB_SLAM::LocalMapping::SearchInNeighbors(); //mpCurrentKeyFrame->updateConnections()...AddConnection()...UpdateBestCovisibles()...
-        //ORB_SLAM::LocalMapping::mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(covisN); //mvpOrderedConnectedKeyFrames()
-        
-        // for each pixel of keyframe_i, project it onto each neighbor keyframe keyframe_j
-        // and propagate inverse depth
-        for (int px = 0; px < im.rows; px++) {
-            for (int py = 0; py < im.cols; py++) {
-                if (h[px][py] == NULL) continue; 
-                
-                float depthp = h[px][py]->depth;
-                int compatible_neighbor_keyframes_count = 0; // count of neighboring keyframes in which there is at least one compatible pixel
-	        
-                for(size_t j=0; j<neighbors.size(); j++){ 
-		    ORB_SLAM::KeyFrame* pKFj = neighbors[j];
-                    
-                    // calibration matrix
-	            cv::Mat Kj = currentKf->GetCalibrationMatrix();
-		    cv::Mat Xp = Kj*im;
-                    
-                    // Tcw_ matrix FIXME: check if this is correct
-                    cv::Mat Tcw_ = currentKf->GetTranslation(); 
-                    // rotation matrix
-                    cv::Mat Rcwj = Tcw_.row(2).colRange(0,3);
-                    Rcwj = Rcwj.t();
-                    
-                    // translation matrix
-                    cv::Mat tcwj = pKFj->GetTranslation();
-                    cv::Mat Tcwj(3,4,CV_32F);
-                    Rcwj.copyTo(Tcwj.colRange(0,3));
-                    tcwj.copyTo(Tcwj.col(3));
-                    
-                    // compute the projection matrix to map 3D point from original image to 2D point in neighbor keyframe
-                    // Eq (12)
-                    cv::Mat Xj = (Kj * Rcwj * (1 / depthp) * Xp) + Kj * Tcwj; 
-                    float depthj = depthp / (Rcwj.row(2).colRange(0,3) * Xp + depthp * Tcwj.row(2).colRange(0,3)); 
 
-                    // find the (float) coordinates of the new point in keyframe_j
-                    cv::Mat pointKfj = Xj * cv::Mat(px, py, depthp);
-                    float xj = pointKfj.at<float>(0,0); 
-                    float yj = pointKfj.at<float>(1,0);
-                    
-                    int compatible_points_count = 0; // count of compatible neighbor pixels
-                    std::vector<cv::Point> compatible_points;
-                    // look in 4-neighborhood pixel p_j,n around xj for compatible inverse depth
-                    int xj_floor = floor(xj);
-                    int yj_floor = floor(yj);
-                    for (int nx = xj_floor; nx <= xj_floor + 1; nx++) {
-                        for (int ny = yj_floor; ny < yj_floor + 1; ny++) {
-                            if (h[nx][ny] == NULL) continue;
-                            float depthjn = h[nx][ny]->depth; 
-                            float sigmajn = h[nx][ny]->sigma; 
-                            // Eq (13)
-                            float test = (depthp - depthjn) * (depthp - depthjn) / (sigmajn * sigmajn);
-                            if (test < 3.84) {
-                                compatible_points_count++;
-                                compatible_points.push_back(cv::Point(nx, ny));
-                            }
+void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM::KeyFrame* currentKf, depthHo*** h) {//int imrows, int imcols) {
+    std::vector<ORB_SLAM::KeyFrame*> neighbors;
+    
+    // option1: could just be the best covisibility keyframes
+    neighbors = currentKf->GetBestCovisibilityKeyFrames(covisN);
+    
+    // option2: could be found in one of the LocalMapping SearchByXXX() methods
+    //ORB_SLAM::LocalMapping::SearchInNeighbors(); //mpCurrentKeyFrame->updateConnections()...AddConnection()...UpdateBestCovisibles()...
+    //ORB_SLAM::LocalMapping::mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(covisN); //mvpOrderedConnectedKeyFrames()
+    
+    // for each pixel of keyframe_i, project it onto each neighbor keyframe keyframe_j
+    // and propagate inverse depth
+    for (int px = 0; px < im.rows; px++) {
+        for (int py = 0; py < im.cols; py++) {
+            if (h[px][py] == NULL) continue; 
+            
+            float depthp = h[px][py]->depth;
+            // count of neighboring keyframes in which there is at least one compatible pixel
+            int compatible_neighbor_keyframes_count = 0; 
+            // keep track of compatible pixels for the gauss-newton step
+            std::vector<depthHo*> compatible_pixels_by_frame[neighbors.size()];
+            int n_compatible_pixels = 0;
+            
+            for(size_t j=0; j<neighbors.size(); j++) { 
+                ORB_SLAM::KeyFrame* pKFj = neighbors[j];
+                
+                cv::Mat kj = pKFj->GetCalibrationMatrix();
+                cv::Mat xp;
+                GetXp(kj, px, py, &xp);
+
+                cv::Mat rcwj = pKFj->GetRotation();
+                cv::Mat tcwj = pKFj->GetTranslation();
+                
+                // Eq (12)
+                // compute the projection matrix to map 3D point from original image to 2D point in neighbor keyframe
+                cv::Mat temp;
+                float denom1, denom2;
+
+                temp = rcwj.row(2) * xp;
+                denom1 = temp.at<float>(0,0);
+                temp = depthp * tcwj.at<float>(2);
+                denom2 = temp.at<float>(0,0);
+                float depthj = depthp / (denom1 + denom2);
+                
+                cv::Mat xj2d = (kj * rcwj * (1 / depthp) * xp) + (kj * tcwj);
+                float xj = xj2d.at<float>(0,0); 
+                float yj = xj2d.at<float>(1,0);
+                
+                std::vector<depthHo*> compatible_pixels;
+                // look in 4-neighborhood pixel p_j,n around xj for compatible inverse depth
+                int pxn = floor(xj);
+                int pyn = floor(yj);
+                for (int nx = pxn-1; nx <= pxn + 1; nx++) {
+                    for (int ny = pyn-1; ny < pyn + 1; ny++) {
+                        if ((nx == ny) || ((nx - pxn) && (ny - pyn))) continue;
+                        if (h[nx][ny] == NULL) continue;
+                        // Eq (13)
+                        float depthjn = h[nx][ny]->depth; 
+                        float sigmajn = h[nx][ny]->sigma; 
+                        float test = pow((depthj - depthjn), 2) / pow(sigmajn, 2);
+                        if (test < 3.84) {
+                            compatible_pixels.push_back(h[nx][ny]);
                         }
                     }
-                    
-                    // at least one compatible pixel p_j,n must be found in at least lambdaN neighbor keyframes
-                    if (compatible_points_count) {
-                        compatible_neighbor_keyframes_count++;
-                        float depthp_star = 1000;
-                        float sum_depth = 0;
-                        for (size_t p; p < compatible_points.size(); p++) {
-                            float depthjn = h[compatible_points[p].x][compatible_points[p].y]->depth;
-                            float sigmajn = h[compatible_points[p].x][compatible_points[p].y]->sigma;
-                            // equation (14)
-                            sum_depth += pow((depthjn - depthp * Rcwj.row(3).colRange(0,3) * Xp * Tcwj.row(2).colRange(0,3)), 2) / (pow(depthjn, 4) * pow(sigmajn, 2)); 
-                        } 
-                    } 
                 }
-                // don't retain the inverse depth distribution of this pixel if not enough support in neighbor keyframes
-                if (compatible_neighbor_keyframes_count < lambdaN) {
-                    h[px][py] = NULL;
+                compatible_pixels_by_frame[j] = compatible_pixels; // is this a memory leak?
+                n_compatible_pixels += compatible_pixels.size();
+                
+                // at least one compatible pixel p_j,n must be found in at least lambdaN neighbor keyframes
+                if (compatible_pixels.size()) {
+                    compatible_neighbor_keyframes_count++;
                 }
+            } // for j = 0...neighbors.size()-1
+            
+            // don't retain the inverse depth distribution of this pixel if not enough support in neighbor keyframes
+            if (compatible_neighbor_keyframes_count < lambdaN) {
+                h[px][py] = NULL;
+            } else {
+                // gauss-newton step to minimize depth difference in all compatible pixels
+                // need 1 iteration since depth propagation eq. is linear in depth
+                float argmin = depthp;
+                cv::Mat J(n_compatible_pixels, 1, CV_32F);
+                cv::Mat R(n_compatible_pixels, 1, CV_32F);
+                int n_compat_index = 0;
+                int iter = 1;
+                for (int k = 0; k < iter; k++) {
+                    for (size_t j = 0; j < neighbors.size(); j++) {
+                        cv::Mat xp;
+                        GetXp(neighbors[j]->GetCalibrationMatrix(), px, py, &xp);
+                        
+                        cv::Mat rji = neighbors[j]->GetRotation();
+                        cv::Mat tji = neighbors[j]->GetTranslation();
+                        for (size_t i = 0; i < compatible_pixels_by_frame[j].size(); i++) {
+                            float ri = 0;
+                            Equation14(compatible_pixels_by_frame[j][i], argmin, xp, rji, tji, &ri);
+                            R.at<float>(n_compat_index, 0) = ri;
+                            
+                            cv::Mat tempm = rji.row(2) * xp;
+                            float tempf = tempm.at<float>(0,0);
+                            depthHo* tempdH = compatible_pixels_by_frame[j][i];
+                            J.at<float>(n_compat_index, 0) = -1 * tempf / (pow(tempdH->depth, 2) * tempdH->sigma);
+                            
+                            n_compat_index++;
+                        }
+                    }
+                    cv::Mat temp = J.inv(cv::DECOMP_SVD) * R;
+                    argmin = argmin - temp.at<float>(0,0);
+                }
+                h[px][py]->depth = argmin;
             }
+        } // for py = 0...im.cols-1
+    } // for px = 0...im.rows-1
+} 
+
+void ProbabilityMapping::Equation14(depthHo*& dHjn, float& depthp, cv::Mat& xp, cv::Mat& rji, cv::Mat& tji, float* res) {
+    cv::Mat tempm = rji.row(2) * xp;
+    float tempf = tempm.at<float>(0,0);
+    float tji_z = tji.at<float>(2);
+    *res = pow((dHjn->depth - (depthp * tempf) - tji_z) / (pow(dHjn->depth, 2) * dHjn->sigma), 1);
+}
+
+// the compatible pixels need to be organized by neighbor keyframe index so that the correct translation/rotation matrix can be used 
+// for each pixel j,n.
+void ProbabilityMapping::Equation14Sum(int j, std::vector<depthHo*>*& compatible_pixels, cv::Mat& xp, cv::Mat*& rji, cv::Mat*& tji, float dp, float* sum) {
+    float s = 0;
+    float tji_z;
+    float tempf;
+    cv::Mat tempm;
+    for (int k = 0; k < j; k++) {
+        tji_z = tji[k].at<float>(2);
+        for (size_t i = 0; i < compatible_pixels[k].size(); i++) {
+            tempm = rji[k].row(2) * xp;
+            tempf = tempm.at<float>(0,0);
+            s += pow((compatible_pixels[k][i]->depth - (dp * tempf) - tji_z) / (pow(compatible_pixels[k][i]->depth, 2) * compatible_pixels[k][i]->sigma) ,2);
         }
     }
-} 
-*/
-
+    *sum = s;
+}
 
 
 ////////////////////////
@@ -499,31 +547,31 @@ void GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* t
   }
 }
 */
-/*
-void ProbabilityMapping::PixelNeighborSupport(const depthHo*** H, int px, int py, std::vector<depthHo>* support) {
+
+void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int px, int py, std::vector<depthHo*>* support) {
     support->clear();
+    float chi = 0;
     for (int x = px - 1; x <= px + 1; x++) {
         for (int y = py - 1; y <= py + 1; y++) {
             if (x == px && y == py) continue; 
-            if (chi_test(H[x][y], H[px][py], NULL)) {
+            if (ChiTest(*(H[x][y]), *(H[px][py]), &chi)) {
                 support->push_back(H[px][py]);
             }
         }
     }
 }
-*/
-/*
-void ProbabilityMapping::PixelNeighborNeighborSupport(const depthHo** H, int px, int py, std::vector<std::vector<depthHo>* support) {
+
+void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {
     support->clear();
+    float chi = 0;
     for (int x = px - 1; x <= px + 1; x++) {
         for (int y = py - 1; y <= py + 1; y++) {
             if (x == px && y == py) continue;
-            std::vector<depthHo> tempSupport;
-            float min_sigma = H[x][y].sigma;
+            std::vector<depthHo*> tempSupport;
             for (int nx = px - 1; nx <= px + 1; nx++) {
                 for (int ny = py - 1; ny <= py + 1; ny++) {
                     if ((nx == px && ny == py) || (nx == x && ny == y)) continue;
-                    if (chi_test(H[x][y], H[nx][ny], NULL) {
+                    if (ChiTest(*(H[x][y]), *(H[nx][ny]), &chi)) {
                         tempSupport.push_back(H[nx][ny]);
                     }
                 }
@@ -532,7 +580,6 @@ void ProbabilityMapping::PixelNeighborNeighborSupport(const depthHo** H, int px,
         }
     }
 }
-*/
 
 void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& ImGrad, float a, float b, float c, int px, float* q) {
     int uplusone = px + 1; 
@@ -562,53 +609,42 @@ void ProbabilityMapping::GetParameterization(const cv::Mat& F12, const int x, co
     *b = x*F12.at<float>(0,1)+y*F12.at<float>(1,1)+F12.at<float>(2,1);
     *c = x*F12.at<float>(0,2)+y*F12.at<float>(1,2)+F12.at<float>(2,2);
 }
-//FIXME: Xp = K-1 * xp (below Equation 8)
-void ProbabilityMapping::GetXp(const cv::Mat& K, const cv::Mat& Im, int x, int y, cv::Mat* Xp) {
-    // this is what we've been currently doing:
-    //*Xp = K * Im;
-    *Xp = K.inv() * Im;
+//Xp = K-1 * xp (below Equation 8)
+// map 2D pixel coordinate to 3D point
+void ProbabilityMapping::GetXp(const cv::Mat& k, int px, int py, cv::Mat* xp) {
+    
+    cv::Mat xp2d = cv::Mat(3,1,CV_32F); 
+    
+    xp2d.at<float>(0,0) = px;
+    xp2d.at<float>(1,0) = py;
+    xp2d.at<float>(2,0) = 1;
 
-    // this is another interpretation:
-    //cv::Mat Kinv = K.inv();
-    //cv::Mat xp(1,2,CV_32F);
-    
-    //xp.at<float>(1,0) = x;
-    //xp.at<float>(2,0) = y;
-    
-    //*Xp = Kinv * xp;
+    *xp = k.inv() * xp2d;
 }
 
 // Equation (8)
-void ProbabilityMapping::GetPixelDepth(const float a, const float b, const float c, int px, int py, const cv::Mat& im, ORB_SLAM::KeyFrame* kf, float* p) {
+void ProbabilityMapping::GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, float* p) {
         
     float fx = kf->fx;
     float cx = kf->cx;
 
     int ucx = px - cx;
-    //int vcx = (a/b)*ucx + (c/b);
 
     cv::Mat rcw = kf->GetRotation();
     cv::Mat tcw = kf->GetTranslation();
     
     cv::Mat xp;
-    GetXp(kf->GetCalibrationMatrix(), im, px, py, &xp); 
+    GetXp(kf->GetCalibrationMatrix(), px, py, &xp); 
 
-    xp = cv::Mat(3,1,CV_32F); //should be a 3-element column matrix since it's being multiplied by a row of the rotation matrix to produce a float.
-    cv::Mat rji_x = cv::Mat(1,3,CV_32F); //rcw.row(0);
-    cv::Mat rji_z = cv::Mat(1,3,CV_32F); //rcw.row(2);
 
-    cv::Mat temp;
-    
-    temp = rji_z * xp;
+    cv::Mat temp = rcw.row(2) * xp;
     double num1 = temp.at<float>(0,0);
-    temp = fx * (rji_x * xp);
+    temp = fx * (rcw.row(0) * xp);
     double num2 = temp.at<float>(0,0);
     double denom1 = -tcw.at<float>(2) * ucx;
     double denom2 = fx * tcw.at<float>(0);
     
     *p = (num1 - num2) / (denom1 + denom2); 
-    //*p = (((rcw.row(2) * xp) * ucx) - (fx * (rcw.row(0) * xp))) / ((-tcw.at<float>(2,0) * ucx) + (fx * tcw.at<float>(0,0)));
-    //*p = (rcw[2] * xp.at<float>(ucx,vcx) - fx * rcw[0] * xp) / (-tcw[2][ucx][vcx] + fx * tcw[0]);
 } 
 
 bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {
