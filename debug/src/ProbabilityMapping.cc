@@ -24,7 +24,7 @@
 #include "LocalMapping.h"
 
 ProbabilityMapping::ProbabilityMapping() {}
-void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh) {}
+//void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh) {}
 //void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {}
 //void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
 void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {}
@@ -354,8 +354,8 @@ void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM:
 ////////////////////////
 // Utility functions
 ////////////////////////
-/*
-void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh) {
+
+void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel_x, float ustar, float ustar_var, float a, float b, float c, ProbabilityMapping::depthHo* dh) {
   cv::Mat image = kf->GetImage();
 
   cv::Mat frame_rot = kf->GetRotation();
@@ -363,35 +363,38 @@ void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, f
   cv::Mat frame_translation = kf->GetTranslation();
   
   cv::Mat transform_data(3,4,CV_32F);
-  frame_rot.copytTo(transform_data.colRange(0,3));
+  frame_rot.copyTo(transform_data.colRange(0,3));
   frame_translation.copyTo(transform_data.col(3));
 
   const float fx = kf -> fx;
   const float cx = kf -> cx;
   cv::Mat calibration_matrix = kf -> GetCalibrationMatrix();
-  
-  cv::Mat corrected_image = calibrated_matrix * image;
-  int ujcx = pixel - cx;
-  int vjcx = (a/b) * ujcx + (c/b);
 
-  float inv_pixel_depth = (inv_frame_rot[2]*corrected_image.at<float>(ujcx,vjcx)-fx*inv_frame_rot[0]*corrected_image)/(transform_data[2][ujcx][vjcx]+fx*transform_data[0]);
+  int pixel_y = (a/b) * pixel_x + (c/b);
+  float *inv_pixel_depth;
+  GetPixelDepth(pixel_x,pixel_y,kf,*inv_pixel_depth);
+  //(inv_frame_rot.row(2)*corrected_image.at<float>(ujcx,vjcx)-fx*inv_frame_rot.row(0)*corrected_image.at<float>(ujcx,vjcx))/(transform_data.row(2)*ujcx[vjcx]+fx*transform_data[0]);
   
-  int ustarcx_min = ustar - cx - sqrt(ustar_var);
-  int vstarcx_min = (a/b)*ustarcx_min + (c/b);
+  int ustar_min = ustar - sqrt(ustar_var);
+  int vstar_min = (a/b)*ustar_min + (c/b);
 
-  float inv_depth_min = (inv_frame_rot[2]*corrected_image.at<float>(ustarcx_min ,vstarcx_min)-fx*inv_frame_rot[0]*corrected_image)/(-transform_data[2][ustarcx_min][vstarcx_min]+fx*transform_data[0]); 
+  float *inv_depth_min;
+  GetPixelDepth(ustar_min,vstar_min,kf,*inv_depth_min);
+  //(inv_frame_rot[2]*corrected_image.at<float>(ustarcx_min ,vstarcx_min)-fx*inv_frame_rot[0]*corrected_image.at<float>(ujcx,vjcx))/(-transform_data[2][ustarcx_min][vstarcx_min]+fx*transform_data[0]); 
   
-  int ustarcx_max = ustar - cx + sqrt(ustar_var);
-  int vstarcx_max = (a/b)*ustarcx_max + (c/b);
+  int ustar_max = ustar +  sqrt(ustar_var);
+  int vstar_max = (a/b)*ustar_max + (c/b);
   
-  float inv_depth_max = (inv_frame_rot[2]*corrected_image.at<float>(ustarcx_max ,vstarcx_max)-fx*inv_frame_rot[0]*corrected_image)/(-transform_data[2][ustarcx_max][vstarcx_max]+fx*transform_data[0]);
+  float *inv_depth_max;
+  GetPixelDepth(ustar_max,vstar_max,kf,*inv_depth_max);
+  //(inv_frame_rot[2]*corrected_image.at<float>(ustarcx_max ,vstarcx_max)-fx*inv_frame_rot[0]*corrected_image.at<float>(ujcx,vjcx)/)/(-transform_data[2][ustarcx_max][vstarcx_max]+fx*transform_data[0]);
 
-  float sigma_depth = max(abs(inv_depth_max), abs(inv_depth_min));
+  float sigma_depth = cv::max(abs(inv_depth_max), abs(inv_depth_min));
 
   dh.depth = inv_pixel_depth;
   dh.sigma = sigma_depth;
 }
-*/
+
 void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
   cv::Scharr(image, *gradx, CV_16S, 1, 0);
   cv::Scharr(image, *grady, CV_16S, 0, 1);
@@ -582,7 +585,7 @@ void ProbabilityMapping::GetXp(const cv::Mat& K, const cv::Mat& Im, int x, int y
     //*Xp = Kinv * xp;
 }
 
-/*  
+
 // Equation (8)
 void ProbabilityMapping::GetPixelDepth(const float a, const float b, const float c, int px, int py, const cv::Mat& im, ORB_SLAM::KeyFrame* kf, float* p) {
         
@@ -615,7 +618,7 @@ void ProbabilityMapping::GetPixelDepth(const float a, const float b, const float
     // *p = (((rcw.row(2) * xp) * ucx) - (fx * (rcw.row(0) * xp))) / ((-tcw.at<float>(2,0) * ucx) + (fx * tcw.at<float>(0,0)));
     // *p = (rcw[2] * xp.at<float>(ucx,vcx) - fx * rcw[0] * xp) / (-tcw[2][ucx][vcx] + fx * tcw[0]);
 } 
-*/
+
 bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {
     float chi_test = (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma) + (ha.depth - hb.depth)*(ha.depth - hb.depth) / (ha.sigma*ha.sigma);
     if (chi_val)
