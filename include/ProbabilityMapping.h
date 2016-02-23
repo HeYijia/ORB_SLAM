@@ -54,7 +54,7 @@ public:
 
         ProbabilityMapping();
 	/* * \brief void first_loop(ORB_SLAM::KeyFrame kf, depthHo**, std::vector<depthHo>*): return results of epipolar search (depth hypotheses) */
-	void FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* support);
+	void FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho);
         /* * \brief void stereo_search_constraints(): return min, max inverse depth */
         void StereoSearchConstraints(ORB_SLAM::KeyFrame* kf, float* min_depth, float* max_depth);
 	/* * \brief void epipolar_search(): return distribution of inverse depths/sigmas for each pixel */
