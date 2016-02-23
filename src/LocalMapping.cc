@@ -81,7 +81,16 @@ void LocalMapping::Run()
 
                 // Tracking will see Local Mapping idle
                 if(!CheckNewKeyFrames())
+                {
                     SetAcceptKeyFrames(true);
+                    for(size_t i=0; i<vpKFs.size(); i++)
+                    {
+                        ORB_SLAM::KeyFrame* pKF = vpKFs[i];
+                        if(pKF->isBad())                      
+                            continue; 
+                        ProbabilityMapper.FirstLoop(pKF,hypothesisMatrix,hypothesisSupport); 
+                    }           
+                }
             }
 
             mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
