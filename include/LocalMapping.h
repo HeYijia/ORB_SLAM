@@ -66,6 +66,10 @@ public:
 
     void InterruptBA();
 
+    static cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
+
+    static cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
+
 protected:
 
     bool CheckNewKeyFrames();
@@ -76,10 +80,6 @@ protected:
     void SearchInNeighbors();
 
     void KeyFrameCulling();
-
-    cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
-
-    cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
 
     void ResetIfRequested();
     bool mbResetRequested;
