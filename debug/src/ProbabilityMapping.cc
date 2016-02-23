@@ -111,11 +111,11 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
   float old_err = 1000.0;
   float best_photometric_err = 0.0;
   float best_gradient_modulo_err = 0.0;
-  int best_pixel;
+  int best_pixel = 0;
 
   int vj;
 
-  float th_grad, th_epipolar_line, th_pi, th_rot;
+  float th_grad, th_epipolar_line, th_pi, th_rot = 0.0;
   cv::Mat gradx2, grady2, grad2;
   GetImageGradient(image, &gradx2, &grady2, &grad2);
   GetInPlaneRotation(kf1, kf2, &th_rot); 
@@ -388,21 +388,21 @@ void ProbabilityMapping::Equation14(depthHo*& dHjn, float& depthp, cv::Mat& xp, 
 void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel_x, float ustar, float ustar_var, float a, float b, float c, ProbabilityMapping::depthHo* dh) {
 
   int pixel_y = (a/b) * pixel_x + (c/b);
-  float *inv_pixel_depth;
+  float *inv_pixel_depth =  NULL;
   GetPixelDepth(pixel_x,pixel_y,kf, inv_pixel_depth);
   //(inv_frame_rot.row(2)*corrected_image.at<float>(ujcx,vjcx)-fx*inv_frame_rot.row(0)*corrected_image.at<float>(ujcx,vjcx))/(transform_data.row(2)*ujcx[vjcx]+fx*transform_data[0]);
   
   int ustar_min = ustar - sqrt(ustar_var);
   int vstar_min = (a/b)*ustar_min + (c/b);
 
-  float *inv_depth_min;
+  float *inv_depth_min = NULL;
   GetPixelDepth(ustar_min,vstar_min,kf, inv_depth_min);
   //(inv_frame_rot[2]*corrected_image.at<float>(ustarcx_min ,vstarcx_min)-fx*inv_frame_rot[0]*corrected_image.at<float>(ujcx,vjcx))/(-transform_data[2][ustarcx_min][vstarcx_min]+fx*transform_data[0]); 
   
   int ustar_max = ustar +  sqrt(ustar_var);
   int vstar_max = (a/b)*ustar_max + (c/b);
   
-  float *inv_depth_max;
+  float *inv_depth_max = NULL;
   GetPixelDepth(ustar_max,vstar_max,kf, inv_depth_max);
   //(inv_frame_rot[2]*corrected_image.at<float>(ustarcx_max ,vstarcx_max)-fx*inv_frame_rot[0]*corrected_image.at<float>(ujcx,vjcx)/)/(-transform_data[2][ustarcx_max][vstarcx_max]+fx*transform_data[0]);
 
