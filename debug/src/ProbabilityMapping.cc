@@ -24,33 +24,10 @@
 #include "LocalMapping.h"
 
 ProbabilityMapping::ProbabilityMapping() {}
-//void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh) {}
-//void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {}
-//void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th) {}
 void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {}
 void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
-//void ProbabilityMapping::PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support) {}
-//void ProbabilityMapping::PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support) {}
-//void ProbabilityMapping::GetIntensityGradient_D(const cv::Mat& im, float* q) {}
-//void ProbabilityMapping::GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p) {}
-//bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) { return true; }
-//void ProbabilityMapping::GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma) {}
 
-//void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho);
-//void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame *kf, float* min_depth, float* max_depth) {}
-//void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame *kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh) {}
-//void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {}
-//void ProbabilityMapping::IntraKeyFrameDepthChecking(depthHo** h, int imrows, int imcols) {}
-//void ProbabilityMapping::InterKeyFrameDepthChecking(ORB_SLAM::KeyFrame* currentKF, depthHo** h, int imrows, int imcols) {}
-
-
-
-
-
-//  depthHo ho[image.rows][image.cols];
-void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho){
-  
-  depth_ho->clear();
+void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho){
   
   std::vector<ORB_SLAM::KeyFrame*> closestMatches = kf->GetBestCovisibilityKeyFrames(covisN);
   
@@ -61,20 +38,31 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::v
   cv::Mat gradx, grady, grad;
   cv::Mat image = kf->GetImage();
   GetImageGradient(image, &gradx, &grady, &grad);
-  
+
+  // store the set of depth hypotheses for each pixel
+  std::vector<depthHo*> depth_ho;
   for(int x = 0; x < image.rows; x++){
     for(int y = 0; y < image.cols; y++){
       ho[x][y] = NULL;
       if(grad.at<float>(x,y) < lambdaG)
         continue;
   
+      depth_ho.clear();
       for(size_t i=0; i<closestMatches.size(); i++){
         ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
         
-        struct depthHo* dh;
+        struct depthHo* dh = NULL;
         EpipolarSearch(kf, kf2, x, y, gradx, grady, grad, min_depth, max_depth, dh);
-        depth_ho->push_back(dh);
+        if (dh != NULL)
+            depth_ho.push_back(dh);
+      }
+      // inverse depth hypothesis fusion
+      if (depth_ho.size()) {
+        depthHo* dh; 
+        InverseDepthHypothesisFusion(depth_ho, dh) {
         ho[x][y] = dh;
+      } else {
+        ho[x][y] = NULL;
       }
     }
   }
@@ -135,7 +123,8 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
       continue;
     if(abs(th_grad - ( th_pi + th_rot )) < lambdaTheta)
       continue;
-    
+
+    //Equations 2 and 3
     float photometric_err = pixel - image.at<float>(uj,vj); //FIXME properly calculate photometric error
     float gradient_modulo_err = grad.at<float>(uj,vj)  - grad2.at<float>(uj,vj);
     float err = (photometric_err*photometric_err + (gradient_modulo_err*gradient_modulo_err)/0.23)/(image_stddev.at<float>(uj,vj));
@@ -154,11 +143,14 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
   int uj_minus = best_pixel - 1;
   int vj_minus = (a/b)*uj_minus + (c/b);
 
+  //Equation 5
   float g = (image.at<float>(uj_plus, vj_plus) - image.at<float>(uj_minus, vj_minus))/2.0;
 
   float q = (grad2.at<float>(uj_plus, vj_plus) - grad2.at<float>(uj_minus, vj_plus))/2;
 
+  //Equation 6: pixel correspondence
   float ustar = best_pixel + (g*best_photometric_err + (1/0.23)*q*best_gradient_modulo_err)/(g*g + (1/0.23)*q*q);
+  //Equation 7: uncertainty in pixel correspondence
   float ustar_var = (2*image_stddev.at<float>(best_pixel,best_vj)*image_stddev.at<float>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
 
   ComputeInvDepthHypothesis(kf1, best_pixel, ustar, ustar_var, a, b, c, dh);
@@ -259,7 +251,7 @@ void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo*
     }
 } 
 
-void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM::KeyFrame* currentKf, depthHo*** h) {//int imrows, int imcols) {
+void ProbabilityMapping::InterKeyFrameDepthChecking(int imrows, int imcols, ORB_SLAM::KeyFrame* currentKf, depthHo*** h) { 
     std::vector<ORB_SLAM::KeyFrame*> neighbors;
     
     // option1: could just be the best covisibility keyframes
