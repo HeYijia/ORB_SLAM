@@ -39,6 +39,7 @@ public:
     Map* mpMap;
 
     void Refresh();
+    void PublishSdpmMapPoints(const std::vector<MapPoint*> &vpMPs, const std::vector<MapPoint*> &vpRefMPs);
     void PublishMapPoints(const std::vector<MapPoint*> &vpMPs, const std::vector<MapPoint*> &vpRefMPs);
     void PublishKeyFrames(const std::vector<KeyFrame*> &vpKFs);
     void PublishCurrentCamera(const cv::Mat &Tcw);
@@ -52,7 +53,8 @@ private:
 
     ros::NodeHandle nh;
     ros::Publisher publisher;
-
+    
+    visualization_msgs::Marker mSdpmPoints;
     visualization_msgs::Marker mPoints;
     visualization_msgs::Marker mReferencePoints;
     visualization_msgs::Marker mKeyFrames;

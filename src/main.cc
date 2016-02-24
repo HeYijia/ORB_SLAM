@@ -187,9 +187,6 @@ int main(int argc, char **argv)
 
     }
     
-    std::vector<ProbabilityMapping::depthHo*> *hypothesisSupport;
-    ProbabilityMapping::depthHo ***hypothesisMatrix;//FIXME
-    
     f.close();
 
     ros::shutdown();

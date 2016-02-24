@@ -28,6 +28,9 @@
 #include <boost/thread.hpp>
 #include "KeyFrameDatabase.h"
 
+#include "types.h"
+
+class ProbabilityMapping;
 
 namespace ORB_SLAM
 {
@@ -75,6 +78,7 @@ protected:
     bool CheckNewKeyFrames();
     void ProcessNewKeyFrame();
     void CreateNewMapPoints();
+    void CreateNewSdpmMapPoints(KeyFrame* pKF);
 
     void MapPointCulling();
     void SearchInNeighbors();
@@ -89,6 +93,8 @@ protected:
 
     LoopClosing* mpLoopCloser;
     Tracking* mpTracker;
+
+    ProbabilityMapping* mSdpmMapper;
 
     std::list<KeyFrame*> mlNewKeyFrames;
 

@@ -39,7 +39,8 @@ class Map
 {
 public:
     Map();
-
+    
+    void AddSdpmMapPoint(MapPoint* pMP);
     void AddKeyFrame(KeyFrame* pKF);
     void AddMapPoint(MapPoint* pMP);
     void EraseMapPoint(MapPoint* pMP);
@@ -48,12 +49,13 @@ public:
     void SetReferenceKeyFrames(const std::vector<KeyFrame*> &vpKFs);
     void SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs);
 
+    std::vector<MapPoint*> GetAllSdpmMapPoints();
     std::vector<KeyFrame*> GetAllKeyFrames();
     std::vector<MapPoint*> GetAllMapPoints();
     cv::Mat GetCameraPose();
     std::vector<KeyFrame*> GetReferenceKeyFrames();
     std::vector<MapPoint*> GetReferenceMapPoints();
-
+    
     int MapPointsInMap();
     int KeyFramesInMap();
 
@@ -66,6 +68,7 @@ public:
     void clear();
 
 protected:
+    std::set<MapPoint*> mSdpmMapPoints;
     std::set<MapPoint*> mspMapPoints;
     std::set<KeyFrame*> mspKeyFrames;
 
