@@ -38,11 +38,12 @@
 
 namespace ORB_SLAM {
 class KeyFrame;
-}
+} 
 
 namespace cv {
 class Mat;
 }
+
 
 class ProbabilityMapping {
 public:
@@ -50,7 +51,7 @@ public:
 	struct depthHo {
 		float depth;
 		float sigma;
-	};
+        };
 
         ProbabilityMapping();
 	/* * \brief void first_loop(ORB_SLAM::KeyFrame kf, depthHo**, std::vector<depthHo>*): return results of epipolar search (depth hypotheses) */

@@ -152,13 +152,30 @@ int main(int argc, char **argv)
         fps=30;
 
     ros::Rate r(fps);
-
+    
+    int count = 0;
+    std::vector<ProbabilityMapping::depthHo*> *hypothesisSupport;
+    ProbabilityMapping::depthHo ***hypothesisMatrix;//FIXME 
     while (ros::ok())
     {
         FramePub.Refresh();
         MapPub.Refresh();
         Tracker.CheckResetByPublishers();
-        r.sleep(); 
+        r.sleep();
+        if(count%300000 == 0){
+            cout << "Loop!\n";
+            vector<ORB_SLAM::KeyFrame*> vpKFs = World.GetAllKeyFrames();
+            for(size_t i = 0; i <vpKFs.size(); i++)
+            {
+              cout << "We have keyframes!\n";
+              ORB_SLAM::KeyFrame* pKF = vpKFs[i];
+              if(pKF->isBad())
+                  continue;
+              cout << "Mapping...\n";
+              ProbabilityMapper.FirstLoop(pKF,hypothesisMatrix,hypothesisSupport);
+            }
+
+        }
     }
 
     // Save keyframe poses at the end of the execution
@@ -186,9 +203,6 @@ int main(int argc, char **argv)
           << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
 
     }
-    
-    std::vector<ProbabilityMapping::depthHo*> *hypothesisSupport;
-    ProbabilityMapping::depthHo ***hypothesisMatrix;//FIXME
     
     f.close();
 

@@ -27,7 +27,10 @@
 #include "Tracking.h"
 #include <boost/thread.hpp>
 #include "KeyFrameDatabase.h"
+//#include "ProbabilityMapping.h"
 
+
+class ProbabilityMapping;
 
 namespace ORB_SLAM
 {
@@ -89,14 +92,15 @@ protected:
 
     LoopClosing* mpLoopCloser;
     Tracking* mpTracker;
-
+    ProbabilityMapping* mpProbabilityMapper;
+    
     std::list<KeyFrame*> mlNewKeyFrames;
 
     KeyFrame* mpCurrentKeyFrame;
 
     std::list<MapPoint*> mlpRecentAddedMapPoints;
 
-    boost::mutex mMutexNewKFs;    
+   boost::mutex mMutexNewKFs;    
 
     bool mbAbortBA;
 
