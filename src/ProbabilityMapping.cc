@@ -48,9 +48,7 @@ void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 
 
 //  depthHo ho[image.rows][image.cols];
-void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::vector<depthHo*>* depth_ho){
-  
-  depth_ho->clear();
+void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho){
   
   std::vector<ORB_SLAM::KeyFrame*> closestMatches = kf->GetBestCovisibilityKeyFrames(covisN);
   
@@ -62,19 +60,29 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho, std::v
   cv::Mat image = kf->GetImage();
   GetImageGradient(image, &gradx, &grady, &grad);
   
+  std::vector<depthHo*> depth_ho;
   for(int x = 0; x < image.rows; x++){
     for(int y = 0; y < image.cols; y++){
       ho[x][y] = NULL;
       if(grad.at<float>(x,y) < lambdaG)
         continue;
-  
+      
+      depth_ho.clear(); 
       for(size_t i=0; i<closestMatches.size(); i++){
         ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
         
-        struct depthHo* dh;
+        struct depthHo* dh = NULL;
         EpipolarSearch(kf, kf2, x, y, gradx, grady, grad, min_depth, max_depth, dh);
-        depth_ho->push_back(dh);
+        if (dh != NULL)
+            depth_ho.push_back(dh);
+      }
+
+      if (depth_ho.size()) {
+        struct depthHo* dh;
+        InverseDepthHypothesisFusion(depth_ho, dh);
         ho[x][y] = dh;
+      } else {
+        ho[x][y] = NULL;
       }
     }
   }
