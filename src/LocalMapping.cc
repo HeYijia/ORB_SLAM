@@ -82,7 +82,7 @@ void LocalMapping::Run()
                 // Tracking will see Local Mapping idle
                 if(!CheckNewKeyFrames())
                 {
-                    cout << "No new keyframes\n";
+                    //cout << "No new keyframes\n";
                     SetAcceptKeyFrames(true);
 
                     //TODO actually turn this into a Thread

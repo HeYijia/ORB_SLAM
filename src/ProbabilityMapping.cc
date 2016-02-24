@@ -49,36 +49,49 @@ void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 
 //  depthHo ho[image.rows][image.cols];
 void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho){
-  
+  cout << "Enter the FirstLoop\n"; 
+
   std::vector<ORB_SLAM::KeyFrame*> closestMatches = kf->GetBestCovisibilityKeyFrames(covisN);
   
+  cout << "Find Stereo Search Constraints\n";
   float max_depth;
   float min_depth;
   StereoSearchConstraints(kf, &min_depth, &max_depth);
-  
+  cout << "Found! min:" << min_depth << "  max:" << max_depth << "\n";
+
+  cout << "Getting Image Gradient\n";
   cv::Mat gradx, grady, grad;
   cv::Mat image = kf->GetImage();
+  //cout << "Image Dump:" << endl << " " << image << endl << endl; 
   GetImageGradient(image, &gradx, &grady, &grad);
+  cout << "Got it!\n";
   
+  cout << "Generating Depth Hypotheses...\n";
   std::vector<depthHo*> depth_ho;
   for(int x = 0; x < image.rows; x++){
     for(int y = 0; y < image.cols; y++){
       ho[x][y] = NULL;
-      if(grad.at<float>(x,y) < lambdaG)
-        continue;
+      cout << "Image gradient:" << endl << " " << grad << endl << endl;
+      cout << "Pixel gradient" << grad.at<float>(x,y) << "  lambdaG: " << lambdaG <<"\n";
+      //if(grad.at<float>(x,y) < lambdaG)
+        //continue;
       
-      depth_ho.clear(); 
+      depth_ho.clear();
+      cout << "Closest Matches size:"<< closestMatches.size() << "\n";
       for(size_t i=0; i<closestMatches.size(); i++){
         ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
         
         struct depthHo* dh = NULL;
+        cout << "Epipolar Search\n";
         EpipolarSearch(kf, kf2, x, y, gradx, grady, grad, min_depth, max_depth, dh);
+        cout << "Depth: " << dh->depth << "\n";
         if (dh != NULL)
             depth_ho.push_back(dh);
       }
 
       if (depth_ho.size()) {
         struct depthHo* dh;
+        cout << "Calculating Inverse Depth Hypothesis\n";
         InverseDepthHypothesisFusion(depth_ho, dh);
         ho[x][y] = dh;
       } else {
@@ -126,7 +139,7 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
   float th_grad, th_epipolar_line, th_pi, th_rot = 0.0;
   cv::Mat gradx2, grady2, grad2;
   GetImageGradient(image, &gradx2, &grady2, &grad2);
-  GetInPlaneRotation(kf1, kf2, &th_rot); 
+  //GetInPlaneRotation(kf1, kf2, &th_rot);//FIXME 
   GetGradientOrientation(x,y,gradx,grady, &th_pi);
 
   for(int uj = min_depth; uj < max_depth; uj++){
@@ -141,8 +154,8 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
       continue;
     if(abs(th_grad - th_epipolar_line - M_PI) < lambdaG)
       continue;
-    if(abs(th_grad - ( th_pi + th_rot )) < lambdaTheta)
-      continue;
+    //if(abs(th_grad - ( th_pi + th_rot )) < lambdaTheta)
+      //continue;
     
     float photometric_err = pixel - image.at<float>(uj,vj); //FIXME properly calculate photometric error
     float gradient_modulo_err = grad.at<float>(uj,vj)  - grad2.at<float>(uj,vj);
@@ -421,17 +434,20 @@ void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int p
 }
 
 void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
+  cout << "Going through Scharr convolution\n";
   cv::Scharr(image, *gradx, CV_16S, 1, 0);
   cv::Scharr(image, *grady, CV_16S, 0, 1);
 	
   cv::Mat absgradx, absgrady;
-
+  
+  cout << "Putting the gradients in the absolute scale\n";
   cv::convertScaleAbs(*gradx, absgradx);
   cv::convertScaleAbs(*grady, absgrady);
   
   *gradx = absgradx;
   *grady = absgrady;
-
+  
+  cout << "weighting the gradients\n";
   cv::addWeighted(absgradx, 0.5, absgrady, 0.5, 0, *grad);
 }
 
