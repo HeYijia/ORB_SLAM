@@ -8,9 +8,8 @@
 #CMakefiles/
 #debug/
 *
-!debug/.gitignore
-!debug/CMakeLists.txt
-!debug/src/
-!debug/inc/
+!debug/
 !src/
 !include/
+!CMakeLists.txt
+!rospkgs/src/
