@@ -51,15 +51,17 @@ public:
 	struct depthHo {
 		float depth;
 		float sigma;
+
+                depthHo():depth(NULL),sigma(NULL) {}
         };
 
         ProbabilityMapping();
 	/* * \brief void first_loop(ORB_SLAM::KeyFrame kf, depthHo**, std::vector<depthHo>*): return results of epipolar search (depth hypotheses) */
-	void FirstLoop(ORB_SLAM::KeyFrame *kf, depthHo*** ho);
+	void FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vector<depthHo> > &ho);
         /* * \brief void stereo_search_constraints(): return min, max inverse depth */
         void StereoSearchConstraints(ORB_SLAM::KeyFrame* kf, float* min_depth, float* max_depth);
 	/* * \brief void epipolar_search(): return distribution of inverse depths/sigmas for each pixel */
-        void EpipolarSearch(ORB_SLAM::KeyFrame *kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh);
+        void EpipolarSearch(ORB_SLAM::KeyFrame *kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo &dh);
 	/* * \brief void inverse_depth_hypothesis_fusion(const vector<depthHo> H, depthHo* dist): 
 	 * *         get the parameters of depth hypothesis distrubution from list of depth hypotheses */
         void InverseDepthHypothesisFusion(const std::vector<depthHo*>& h, depthHo* dist);
@@ -74,7 +76,7 @@ private:
         void GetTR(ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r);
         void GetXp(const cv::Mat& K, int x, int y, cv::Mat* Xp);
         void GetParameterization(const cv::Mat& F12, const int x, const int y, float* a, float* b, float* c);
-        void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh);
+        void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo &dh);
         void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad);
         void GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th);
         void GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th);

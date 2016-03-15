@@ -153,19 +153,19 @@ int main(int argc, char **argv)
 
     ros::Rate r(fps);
     
-    //int count = 0;
+    int count = 0;
     while (ros::ok())
     {
         FramePub.Refresh();
         MapPub.Refresh();
         Tracker.CheckResetByPublishers();
         r.sleep();
-     /*   count++;
+        count++;
         if(count%500 == 0){
             cout << "Loop!\n";
             vector<ORB_SLAM::KeyFrame*> vpKFs = World.GetAllKeyFrames(); 
-            cv::Mat img = vpKFs[0]->GetImage();
-            ProbabilityMapping::depthHo hypothesisMatrix[img.cols][img.rows];//FIXME 
+            //cv::Mat img = vpKFs[0]->GetImage();
+            //ProbabilityMapping::depthHo* hypothesisMatrix[img.cols][img.rows];//fixed? 
               
             for(size_t i = 0; i <vpKFs.size(); i++)
             {
@@ -174,10 +174,11 @@ int main(int argc, char **argv)
               if(pKF->isBad())
                   continue;
               cout << "Mapping...\n";
-              ProbabilityMapper.FirstLoop(pKF,hypothesisMatrix);
+              std::vector<std::vector<ProbabilityMapping::depthHo> > hypothesisMatrix;
+              ProbabilityMapper.FirstLoop(pKF, hypothesisMatrix);
             }
 
-        }*/
+        }
     }
 
     // Save keyframe poses at the end of the execution
