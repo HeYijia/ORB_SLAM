@@ -22,16 +22,14 @@
 #include "LoopClosing.h"
 #include "ORBmatcher.h"
 #include "Optimizer.h"
-#include "ProbabilityMapping.h"
 
 #include <ros/ros.h>
-#include <stdio.h>
 
 namespace ORB_SLAM
 {
 
 LocalMapping::LocalMapping(Map *pMap):
-    mbResetRequested(false), mpMap(pMap), mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbAcceptKeyFrames(true)
+    mbResetRequested(false), mpMap(pMap),  mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbAcceptKeyFrames(true)
 {
 }
 
@@ -79,21 +77,11 @@ void LocalMapping::Run()
                 // Check redundant local Keyframes
                 KeyFrameCulling();
 
-                printf("LocalMapping: Processing %d KeyFrames\n", (int)mpMap->GetAllKeyFrames().size());
-                vector<KeyFrame*> temp = mpMap->GetAllKeyFrames();
-                for (size_t n = 0; n < temp.size(); n++) {
-                    ORB_SLAM::KeyFrame* pKF = temp[n];
-                    if(pKF->isBad()) continue;
-                    CreateNewSdpmMapPoints(pKF);
-                }           
-                
                 mpMap->SetFlagAfterBA();
 
                 // Tracking will see Local Mapping idle
                 if(!CheckNewKeyFrames())
-                {
                     SetAcceptKeyFrames(true);
-                }
             }
 
             mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
@@ -378,34 +366,6 @@ void LocalMapping::CreateNewMapPoints()
 
             mpMap->AddMapPoint(pMP);
             mlpRecentAddedMapPoints.push_back(pMP);
-        }
-    }
-}
-
-void LocalMapping::CreateNewSdpmMapPoints(KeyFrame* pKF) {
-    size_t rows = pKF->GetImage().rows;
-    size_t cols = pKF->GetImage().cols;
-    
-    std::vector<std::vector<depthHo> > hypothesisMatrix;
-    for (int i = 0; i < rows; i++) {
-        struct depthHo dh;
-        dh.depth = NULL_DEPTH;
-        std::vector<depthHo> temp(cols, dh);
-        hypothesisMatrix.push_back(temp);
-    }
-    mSdpmMapper->FirstLoop(pKF, hypothesisMatrix); 
-    
-    
-    for (size_t i = 0; i < rows; i++) {
-        for (size_t j = 0; j < cols; j++) {
-            if (hypothesisMatrix[i][j].depth == NULL_DEPTH) continue;
-            cv::Mat x3D(3,1,CV_32F);
-            x3D.at<float>(0,0) = i;
-            x3D.at<float>(1,0) = j;
-            x3D.at<float>(2,0) = hypothesisMatrix[i][j].depth;
-            
-            MapPoint* pMP = new MapPoint(x3D,pKF,mpMap);
-            mpMap->AddSdpmMapPoint(pMP);
         }
     }
 }

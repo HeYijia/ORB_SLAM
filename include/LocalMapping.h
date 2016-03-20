@@ -28,9 +28,6 @@
 #include <boost/thread.hpp>
 #include "KeyFrameDatabase.h"
 
-#include "types.h"
-
-class ProbabilityMapping;
 
 namespace ORB_SLAM
 {
@@ -69,21 +66,20 @@ public:
 
     void InterruptBA();
 
-    static cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
-
-    static cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
-
 protected:
 
     bool CheckNewKeyFrames();
     void ProcessNewKeyFrame();
     void CreateNewMapPoints();
-    void CreateNewSdpmMapPoints(KeyFrame* pKF);
 
     void MapPointCulling();
     void SearchInNeighbors();
 
     void KeyFrameCulling();
+
+    cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
+
+    cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
 
     void ResetIfRequested();
     bool mbResetRequested;
@@ -93,8 +89,6 @@ protected:
 
     LoopClosing* mpLoopCloser;
     Tracking* mpTracker;
-
-    ProbabilityMapping* mSdpmMapper;
 
     std::list<KeyFrame*> mlNewKeyFrames;
 

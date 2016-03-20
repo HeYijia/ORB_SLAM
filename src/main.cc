@@ -34,7 +34,6 @@
 #include "LoopClosing.h"
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
-#include "ProbabilityMapping.h"
 
 
 #include "Converter.h"
@@ -128,14 +127,11 @@ int main(int argc, char **argv)
     //Initialize the Local Mapping Thread and launch
     ORB_SLAM::LocalMapping LocalMapper(&World);
     boost::thread localMappingThread(&ORB_SLAM::LocalMapping::Run,&LocalMapper);
-    
-    //Initialize probability mapping
-    ProbabilityMapping ProbabilityMapper;
 
     //Initialize the Loop Closing Thread and launch
     ORB_SLAM::LoopClosing LoopCloser(&World, &Database, &Vocabulary);
     boost::thread loopClosingThread(&ORB_SLAM::LoopClosing::Run, &LoopCloser);
-    
+
     //Set pointers between threads
     Tracker.SetLocalMapper(&LocalMapper);
     Tracker.SetLoopClosing(&LoopCloser);
@@ -158,7 +154,7 @@ int main(int argc, char **argv)
         FramePub.Refresh();
         MapPub.Refresh();
         Tracker.CheckResetByPublishers();
-        r.sleep(); 
+        r.sleep();
     }
 
     // Save keyframe poses at the end of the execution
@@ -186,7 +182,6 @@ int main(int argc, char **argv)
           << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
 
     }
-    
     f.close();
 
     ros::shutdown();

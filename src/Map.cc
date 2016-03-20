@@ -38,12 +38,6 @@ void Map::AddKeyFrame(KeyFrame *pKF)
     mbMapUpdated=true;
 }
 
-void Map::AddSdpmMapPoint(MapPoint* pMP) {
-    boost::mutex::scoped_lock lock(mMutexMap);
-    mSdpmMapPoints.insert(pMP);
-    mbMapUpdated=true;
-}
-
 void Map::AddMapPoint(MapPoint *pMP)
 {
     boost::mutex::scoped_lock lock(mMutexMap);
@@ -70,11 +64,6 @@ void Map::SetReferenceMapPoints(const vector<MapPoint *> &vpMPs)
     boost::mutex::scoped_lock lock(mMutexMap);
     mvpReferenceMapPoints = vpMPs;
     mbMapUpdated=true;
-}
-
-vector<MapPoint*> Map::GetAllSdpmMapPoints() {
-    boost::mutex::scoped_lock lock(mMutexMap);
-    return vector<MapPoint*>(mSdpmMapPoints.begin(), mSdpmMapPoints.end());
 }
 
 vector<KeyFrame*> Map::GetAllKeyFrames()

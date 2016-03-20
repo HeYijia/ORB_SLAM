@@ -89,6 +89,8 @@ private:
 	bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val);
 	void GetFusion(const std::vector<depthHo>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);
         void Equation14(depthHo& dHjn, float& depthp, cv::Mat& xp, cv::Mat& rji, cv::Mat& tji, float* res);
+        cv::Mat ComputeFundamental(ORB_SLAM::KeyFrame *&pKF1, ORB_SLAM::KeyFrame *&pKF2);
+        cv::Mat GetSkewSymmetricMatrix(const cv::Mat &v);
 };
 
 #endif

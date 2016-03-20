@@ -22,8 +22,6 @@
 #include "MapPoint.h"
 #include "KeyFrame.h"
 
-#include <stdio.h>
-
 namespace ORB_SLAM
 {
 
@@ -47,19 +45,6 @@ MapPublisher::MapPublisher(Map* pMap):mpMap(pMap), mbCameraUpdated(false)
     mPoints.pose.orientation.w=1.0;
     mPoints.action=visualization_msgs::Marker::ADD;
     mPoints.color.a = 1.0;
-
-    //Configure SDPM MapPoints
-    mSdpmPoints.header.frame_id = MAP_FRAME_ID;
-    mSdpmPoints.ns = POINTS_NAMESPACE;
-    mSdpmPoints.id=1;
-    mSdpmPoints.type = visualization_msgs::Marker::POINTS;
-    mSdpmPoints.scale.x=fPointSize;
-    mSdpmPoints.scale.y=fPointSize;
-    mSdpmPoints.pose.orientation.w=1.0;
-    mSdpmPoints.action=visualization_msgs::Marker::ADD;
-    mSdpmPoints.color.r = 1.0f;
-    mSdpmPoints.color.b = 1.0f;
-    mSdpmPoints.color.a = 1.0;
 
     //Configure KeyFrames
     fCameraSize=0.04;
@@ -125,7 +110,6 @@ MapPublisher::MapPublisher(Map* pMap):mpMap(pMap), mbCameraUpdated(false)
     publisher = nh.advertise<visualization_msgs::Marker>("ORB_SLAM/Map", 10);
 
     publisher.publish(mPoints);
-    publisher.publish(mSdpmPoints);
     publisher.publish(mReferencePoints);
     publisher.publish(mCovisibilityGraph);
     publisher.publish(mKeyFrames);
@@ -142,56 +126,15 @@ void MapPublisher::Refresh()
     }
     if(mpMap->isMapUpdated())
     {
-        vector<MapPoint*> vSdpmMapPoints = mpMap->GetAllSdpmMapPoints();
         vector<KeyFrame*> vKeyFrames = mpMap->GetAllKeyFrames();
         vector<MapPoint*> vMapPoints = mpMap->GetAllMapPoints();
         vector<MapPoint*> vRefMapPoints = mpMap->GetReferenceMapPoints();
 
-        PublishSdpmMapPoints(vMapPoints, vRefMapPoints);   
         PublishMapPoints(vMapPoints, vRefMapPoints);   
         PublishKeyFrames(vKeyFrames);
 
         mpMap->ResetUpdated();
     }    
-}
-
-void MapPublisher::PublishSdpmMapPoints(const vector<MapPoint*> &vpMPs, const vector<MapPoint*> &vpRefMPs) {
-    mSdpmPoints.points.clear();
-    mReferencePoints.points.clear();
-
-    set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
-
-    for(size_t i=0, iend=vpMPs.size(); i<iend;i++)
-    {
-        if(vpMPs[i]->isBad() || spRefMPs.count(vpMPs[i]))
-            continue;
-        geometry_msgs::Point p;
-        cv::Mat pos = vpMPs[i]->GetWorldPos();
-        p.x=pos.at<float>(0);
-        p.y=pos.at<float>(1);
-        p.z=pos.at<float>(2);
-
-        mSdpmPoints.points.push_back(p);
-    }
-
-    for(set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
-    {
-        if((*sit)->isBad())
-            continue;
-        geometry_msgs::Point p;
-        cv::Mat pos = (*sit)->GetWorldPos();
-        p.x=pos.at<float>(0);
-        p.y=pos.at<float>(1);
-        p.z=pos.at<float>(2);
-
-        mReferencePoints.points.push_back(p);
-    }
-
-    mSdpmPoints.header.stamp = ros::Time::now();
-    mReferencePoints.header.stamp = ros::Time::now();
-    publisher.publish(mSdpmPoints);
-    publisher.publish(mReferencePoints);
-    printf("PUBLISHING SDPM MAP POINTS!\n");
 }
 
 void MapPublisher::PublishMapPoints(const vector<MapPoint*> &vpMPs, const vector<MapPoint*> &vpRefMPs)

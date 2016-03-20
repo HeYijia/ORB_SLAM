@@ -21,13 +21,14 @@
 #include <numeric>
 #include "ProbabilityMapping.h"
 #include "KeyFrame.h"
-#include "LocalMapping.h"
+//#include "LocalMapping.h"
 #include "MapPoint.h"
 #include "ORBmatcher.h"
 
 #include <stdio.h>
 
 ProbabilityMapping::ProbabilityMapping() {}
+
 void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 
 
@@ -98,7 +99,7 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
   cv::Mat image_stddev, image_mean;
   cv::meanStdDev(image,image_mean,image_stddev);
   
-  cv::Mat F12 = ORB_SLAM::LocalMapping::ComputeF12(kf1,kf2); 
+  cv::Mat F12 = ComputeFundamental(kf1,kf2); 
   float a = x*F12.at<float>(0,0)+y*F12.at<float>(1,0)+F12.at<float>(2,0);
   float b = x*F12.at<float>(0,1)+y*F12.at<float>(1,1)+F12.at<float>(2,1);
   float c = x*F12.at<float>(0,2)+y*F12.at<float>(1,2)+F12.at<float>(2,2);
@@ -664,4 +665,28 @@ void ProbabilityMapping::GetFusion(const std::vector<depthHo>& compatible_ho, de
         *min_sigma = temp_min_sigma;
     }
 } 
+
+cv::Mat ProbabilityMapping::ComputeFundamental(ORB_SLAM::KeyFrame *&pKF1, ORB_SLAM::KeyFrame *&pKF2) {
+    cv::Mat R1w = pKF1->GetRotation();
+    cv::Mat t1w = pKF1->GetTranslation();
+    cv::Mat R2w = pKF2->GetRotation();
+    cv::Mat t2w = pKF2->GetTranslation();
+
+    cv::Mat R12 = R1w*R2w.t();
+    cv::Mat t12 = -R1w*R2w.t()*t2w+t1w;
+
+    cv::Mat t12x = GetSkewSymmetricMatrix(t12);
+
+    cv::Mat K1 = pKF1->GetCalibrationMatrix();
+    cv::Mat K2 = pKF2->GetCalibrationMatrix();
+
+
+    return K1.t().inv()*t12x*R12*K2.inv();
+}
+
+cv::Mat ProbabilityMapping::GetSkewSymmetricMatrix(const cv::Mat &v) {
+    return (cv::Mat_<float>(3,3) <<             0, -v.at<float>(2), v.at<float>(1),
+                                  v.at<float>(2),               0,-v.at<float>(0),
+                                 -v.at<float>(1),  v.at<float>(0),              0);
+}
 
