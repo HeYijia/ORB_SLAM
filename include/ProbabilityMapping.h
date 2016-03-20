@@ -84,7 +84,7 @@ private:
         void PixelNeighborSupport(depthHo*** H, int x, int y, std::vector<depthHo*>* support);
         void PixelNeighborNeighborSupport(depthHo*** H, int px, int py, std::vector<std::vector<depthHo*> >* support);
         void GetIntensityGradient_D(const cv::Mat& ImGrad, float a, float b, float c, int px, float* q);
-        void GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, float* p);
+        void GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, float &p);
         //void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p);
 	bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val);
 	void GetFusion(const std::vector<depthHo*>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);
