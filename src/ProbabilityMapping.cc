@@ -209,12 +209,12 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
     int uj_minus = best_pixel - 1;
     int vj_minus = (a/b)*uj_minus + (c/b);
 
-    float g = (image.at<int16_t>(uj_plus, vj_plus) - image.at<int16_t>(uj_minus, vj_minus))/2.0;
+    float g = (image.at<uchar>(uj_plus, vj_plus) - image.at<uchar>(uj_minus, vj_minus))/2.0;
 
-    float q = (grad2.at<int16_t>(uj_plus, vj_plus) - grad2.at<int16_t>(uj_minus, vj_plus))/2;
+    float q = (grad2.at<uchar>(uj_plus, vj_plus) - grad2.at<uchar>(uj_minus, vj_plus))/2;
 
     float ustar = best_pixel + (g*best_photometric_err + (1/0.23)*q*best_gradient_modulo_err)/(g*g + (1/0.23)*q*q);
-    float ustar_var = (2*image_stddev.at<float>(best_pixel,best_vj)*image_stddev.at<float>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
+    float ustar_var = (2*image_stddev.at<uchar>(best_pixel,best_vj)*image_stddev.at<float>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
   
     //cout << "Computing Inverse Depth Hypothesis\n";
     ComputeInvDepthHypothesis(kf1, best_pixel, ustar, ustar_var, a, b, c, dh);
