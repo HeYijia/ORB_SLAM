@@ -41,14 +41,16 @@
 
 namespace ORB_SLAM {
 class KeyFrame;
-}
+} 
 
 namespace cv {
 class Mat;
 }
 
+
 class ProbabilityMapping {
 public:
+<<<<<<< HEAD
 //        struct depthHo;
 	//struct depthHo {
 //		float depth;
@@ -63,6 +65,24 @@ public:
 	/* * \brief void epipolar_search(): return distribution of inverse depths/sigmas for each pixel */
         void EpipolarSearch(ORB_SLAM::KeyFrame *kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo* dh);
 	/* * \brief void inverse_depth_hypothesis_fusion(const vector<depthHo> H, depthHo dist): 
+=======
+
+	struct depthHo {
+		float depth;
+		float sigma;
+
+                depthHo():depth(NULL),sigma(NULL) {}
+        };
+
+        ProbabilityMapping();
+	/* * \brief void first_loop(ORB_SLAM::KeyFrame kf, depthHo**, std::vector<depthHo>*): return results of epipolar search (depth hypotheses) */
+	void FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vector<depthHo> > &ho);
+        /* * \brief void stereo_search_constraints(): return min, max inverse depth */
+        void StereoSearchConstraints(ORB_SLAM::KeyFrame* kf, float* min_depth, float* max_depth);
+	/* * \brief void epipolar_search(): return distribution of inverse depths/sigmas for each pixel */
+        void EpipolarSearch(ORB_SLAM::KeyFrame *kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo &dh);
+	/* * \brief void inverse_depth_hypothesis_fusion(const vector<depthHo> H, depthHo* dist): 
+>>>>>>> 0412eb271ac61504be761a5e33e70f2010ce807a
 	 * *         get the parameters of depth hypothesis distrubution from list of depth hypotheses */
         void InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist);
 	/* * \brief void intraKeyFrameDepthChecking(std::vector<std::vector<depthHo> > h, int imrows, int imcols): intra-keyframe depth-checking, smoothing, and growing. */
@@ -76,7 +96,7 @@ private:
         void GetTR(ORB_SLAM::KeyFrame* kf, cv::Mat* t, cv::Mat* r);
         void GetXp(const cv::Mat& K, int x, int y, cv::Mat* Xp);
         void GetParameterization(const cv::Mat& F12, const int x, const int y, float* a, float* b, float* c);
-        void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo* dh);
+        void ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel, float ustar, float ustar_var, float a, float b, float c, depthHo &dh);
         void GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad);
         void GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th);
         void GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th);
@@ -84,7 +104,7 @@ private:
         void PixelNeighborSupport(std::vector<std::vector<depthHo> > H, int x, int y, std::vector<depthHo>& support);
         void PixelNeighborNeighborSupport(std::vector<std::vector<depthHo> > H, int px, int py, std::vector<std::vector<depthHo> >& support);
         void GetIntensityGradient_D(const cv::Mat& ImGrad, float a, float b, float c, int px, float* q);
-        void GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, float* p);
+        void GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, float &p);
         //void GetPixelDepth(const cv::Mat& Im, const cv::Mat& R, const cv::Mat& T, ORB_SLAM::KeyFrame* kF, int u, float *p);
 	bool ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val);
 	void GetFusion(const std::vector<depthHo>& best_compatible_ho, depthHo* hypothesis, float* min_sigma);

@@ -30,8 +30,8 @@ namespace ORB_SLAM
 
 LocalMapping::LocalMapping(Map *pMap):
     mbResetRequested(false), mpMap(pMap),  mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbAcceptKeyFrames(true)
-{
-}
+  {
+  }
 
 void LocalMapping::SetLoopCloser(LoopClosing* pLoopCloser)
 {
