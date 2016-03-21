@@ -127,13 +127,13 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
 
   int vj;
 
-  float th_grad, th_epipolar_line, th_pi, th_rot = 0.0;
+  cv::Mat th_grad, th_pi;
   cv::Mat gradx2, grady2, grad2;
   //cout << "Getting Image Gradient\n";
   GetImageGradient(image, &gradx2, &grady2, &grad2);
   //GetInPlaneRotation(kf1, kf2, &th_rot);//FIXME 
   //cout << "Getting Gradient Orientation\n";
-  GetGradientOrientation(x,y,gradx,grady, &th_pi);
+  cv::phase(gradx,grady, th_pi,true);
   //cout << "th_pi: " << th_pi << endl;
   for(int uj = 0; uj < image.cols; uj++){ // FIXME should use  min and max depth
     vj = (a/b)*uj+(c/b);
@@ -152,23 +152,23 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
       continue;
     }
 
-    GetGradientOrientation(uj,vj,gradx2,grady2,&th_grad);
+    cv::phase(gradx2,grady2,th_grad,true);
     //cout << "th_grad: " << th_grad << endl;
-    th_epipolar_line = cv::fastAtan2(uj,vj); 
+    float th_epipolar_line = cv::fastAtan2(uj,vj); 
     //cout << "theta epipolar line: " << th_epipolar_line << endl;
 
 //FIXME ASAP
-  /*  if(abs(th_grad - th_epipolar_line + M_PI) < lambdaL){
+    if(abs(th_grad.at<float>(uj,vj) - th_epipolar_line + M_PI) < lambdaL){
       cout << "low angle\n";
       continue;
     }
-    if(abs(th_grad - th_epipolar_line - M_PI) < lambdaL){
+    if(abs(th_grad.at<float> - th_epipolar_line - M_PI) < lambdaL){
       cout << "high angle\n";
       continue;
     }
     //if(abs(th_grad - ( th_pi + th_rot )) < lambdaTheta)
       //continue;
-   */ 
+   
     float photometric_err = pixel - image.at<uchar>(uj,vj); //FIXME properly calculate photometric error
     float gradient_modulo_err = grad.at<uchar>(uj,vj)  - grad2.at<uchar>(uj,vj);
     float err = (photometric_err*photometric_err + (gradient_modulo_err*gradient_modulo_err)/0.23)/(image_stddev.at<uchar>(uj,vj));
@@ -200,7 +200,7 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
     float q = (grad2.at<uchar>(uj_plus, vj_plus) - grad2.at<uchar>(uj_minus, vj_plus))/2;
 
     float ustar = best_pixel + (g*best_photometric_err + (1/0.23)*q*best_gradient_modulo_err)/(g*g + (1/0.23)*q*q);
-    float ustar_var = (2*image_stddev.at<uchar>(best_pixel,best_vj)*image_stddev.at<float>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
+    float ustar_var = (2*image_stddev.at<uchar>(best_pixel,best_vj)*image_stddev.at<uchar>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
   
     //cout << "Computing Inverse Depth Hypothesis\n";
     ComputeInvDepthHypothesis(kf1, best_pixel, ustar, ustar_var, a, b, c, dh);
@@ -491,15 +491,6 @@ void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, 
   //cout << "Type: " << grad->depth() << endl;
 }
 
-void ProbabilityMapping::GetGradientOrientation(int x, int y, const cv::Mat& gradx, const cv::Mat& grady, float* th){
-    
-  float valuex = gradx.at<uchar>(x,y);
-  float valuey = grady.at<uchar>(x,y);
-  //cout << "valx:" << valuex << endl;
-  //cout << "valy:" << valuey << endl;
-  *th =  cv::fastAtan2(valuex, valuey);
- 
-}
 
 //TODO use IC_ANGLE from ORBextractor.cc
 //might be a good idea to store these when they get calculated during ORB-SLAM.
