@@ -21,70 +21,70 @@
 #include <numeric>
 #include "ProbabilityMapping.h"
 #include "KeyFrame.h"
-//#include "LocalMapping.h"
 #include "MapPoint.h"
 #include "ORBmatcher.h"
 #include "LocalMapping.h"
 #include <stdint.h>
 #include <stdio.h>
 
+#define DEBUG 1
+#define DBG(do_something) if (DEBUG) { do_something; }
+
 ProbabilityMapping::ProbabilityMapping() {}
-void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {}
-//void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 
-
-//  depthHo ho[image.rows][image.cols];
 void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vector<depthHo> > &ho){
-  cout << "Enter the FirstLoop\n"; 
+  DBG(cout << "Enter the FirstLoop\n") 
 
   std::vector<ORB_SLAM::KeyFrame*> closestMatches = kf->GetBestCovisibilityKeyFrames(covisN);
   
-  cout << "Find Stereo Search Constraints\n";
+  DBG(cout << "Find Stereo Search Constraints\n")
   float max_depth;
   float min_depth;
   
   StereoSearchConstraints(kf, &min_depth, &max_depth);
-  cout << "Found! min:" << min_depth << "  max:" << max_depth << "\n";
-  cout << "Getting Image Gradient\n";
+  DBG(cout << "Found! min:" << min_depth << "  max:" << max_depth << "\n";
+      cout << "Getting Image Gradient\n")
 
   cv::Mat gradx, grady, grad;
   cv::Mat image = kf->GetImage();
 
   GetImageGradient(image, &gradx, &grady, &grad);
-  cout << "Got it!\n";
-  cout << "Generating Depth Hypotheses...\n";
+  DBG(cout << "Got it!\n";
+      cout << "Generating Depth Hypotheses...\n")
   
   std::vector<depthHo> depth_ho;
 
   std::vector<std::vector<depthHo> > temp_ho (image.rows, std::vector<depthHo>(image.cols, depthHo()) );
   for(int x = 0; x < image.rows; x++){
     for(int y = 0; y < image.cols; y++){
-      cout << "Pixel gradient: " <<static_cast<unsigned>(grad.at<uchar>(x,y)) << "  lambdaG: " << lambdaG <<"\n";
+      DBG(cout << "Pixel gradient: " <<static_cast<unsigned>(grad.at<uchar>(x,y)) << "  lambdaG: " << lambdaG <<"\n")
       if(grad.at<uchar>(x,y) < lambdaG){
         continue;
       }
       
       depth_ho.clear();
-      cout << "Closest Matches size:"<< closestMatches.size() << "\n";
+      DBG(cout << "Closest Matches size:"<< closestMatches.size() << "\n")
       for(size_t i=0; i<closestMatches.size(); i++){
         ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
         
-        depthHo* dh = new depthHo();
-        EpipolarSearch(kf, kf2, x, y, gradx, grady, grad, min_depth, max_depth, dh);
-        cout << "Depth: " << dh->depth << "\n";
-        if (dh != NULL)
-            depth_ho.push_back(*dh);
+        depthHo dh;
+        float pixel = image.at<uchar>(x,y); //maybe it should be cv::Mat
+        EpipolarSearch(kf, kf2, x, y, pixel, gradx, grady, grad, min_depth, max_depth, &dh);
+        DBG(cout << "Depth: " << dh.depth << "\n")
+        if (dh.supported)
+            depth_ho.push_back(dh);
       }
-      
-      printf("FirstLoop: found a set of %d hypotheseses for pixel %d,%d\n", (int)(depth_ho.size()), x, y);
+
+      DBG(printf("FirstLoop: found a set of %d hypotheseses for pixel %d,%d\n", (int)(depth_ho.size()), x, y))
       if (depth_ho.size()) {
-        depthHo* dh = new depthHo();
-        cout << "Calculating Inverse Depth Hypothesis\n";
-        InverseDepthHypothesisFusion(depth_ho, dh);
-        temp_ho[x][y] = *dh;
-      }// else {
-       // temp_ho[x][y] = NULL;
-      //}
+        depthHo dh;
+        DBG(cout << "Calculating Inverse Depth Hypothesis\n")
+        InverseDepthHypothesisFusion(depth_ho, &dh);
+        dh.supported = true;
+        temp_ho[x][y] = dh;
+      } else {
+        temp_ho[x][y].supported = false;
+      }
     }
   }
   ho = temp_ho;
@@ -105,9 +105,8 @@ void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame* kf, float* 
   *min_depth = mean - 2 * stdev;
 }
   
-void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, 
-    float min_depth, float max_depth, depthHo* dh) {
-  float pixel = original.at<uchar>(x,y); //maybe it should be cv::Mat
+void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, float pixel, cv::Mat gradx, cv::Mat grady, cv::Mat grad, 
+    float min_depth, float max_depth, depthHo *dh) {
 
   cv::Mat image = kf2->GetImage();
   cv::Mat image_stddev, image_mean;
@@ -117,7 +116,7 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
   float a = x*F12.at<float>(0,0)+y*F12.at<float>(1,0)+F12.at<float>(2,0);
   float b = x*F12.at<float>(0,1)+y*F12.at<float>(1,1)+F12.at<float>(2,1);
   float c = x*F12.at<float>(0,2)+y*F12.at<float>(1,2)+F12.at<float>(2,2);
- // cout << "Line Equation a:" << a << "  b:" << b << "  c:" << c << endl; 
+  DBG(cout << "Line Equation a:" << a << "  b:" << b << "  c:" << c << endl)
   float old_err = 1000.0;
   float best_photometric_err = 0.0;
   float best_gradient_modulo_err = 0.0;
@@ -127,40 +126,42 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
 
   cv::Mat th_grad, th_pi;
   cv::Mat gradx2, grady2, grad2;
-  //cout << "Getting Image Gradient\n";
+  DBG(cout << "Getting Image Gradient\n")
   GetImageGradient(image, &gradx2, &grady2, &grad2);
   //GetInPlaneRotation(kf1, kf2, &th_rot);//FIXME 
-  //cout << "Getting Gradient Orientation\n";
+  //GetGradientOrientation(x,y,gradx,grady, &th_pi);
   cv::phase(gradx,grady, th_pi,true);
-  //cout << "th_pi: " << th_pi << endl;
+  DBG(cout << "Getting Gradient Orientation\n";
+      cout << "th_pi: " << th_pi << endl)
   for(int uj = 0; uj < image.cols; uj++){ // FIXME should use  min and max depth
     vj = (a/b)*uj+(c/b);
-    //cout << "uj: " << uj << endl;
-    //cout << "vj: " << vj << endl;
+    DBG(cout << "uj: " << uj << endl;
+        cout << "vj: " << vj << endl)
     if(!kf2 -> IsInImage(uj,vj)){
-      //cout << "not in image\n";
+      DBG(cout << "not in image\n")
       continue;
     }
-    //cout << "IN LOOP\n";
-    cout << "Pixel value2:" << static_cast<unsigned>(image.at<uchar>(uj,vj)) << endl; 
-    cout << "Grad2:" << static_cast<unsigned>(grad2.at<uchar>(uj,vj)) << endl;
+    DBG(cout << "IN LOOP\n";
+        cout << "Pixel value2:" << static_cast<unsigned>(image.at<uchar>(uj,vj)) << endl; 
+        cout << "Grad2:" << static_cast<unsigned>(grad2.at<uchar>(uj,vj)) << endl)
     
     if(grad2.at<uchar>(uj,vj) < lambdaG){
-      cout << "low gradient\n"; 
+      DBG(cout << "low gradient\n")
       continue;
     }
 
+    //GetGradientOrientation(uj,vj,gradx2,grady2,&th_grad);
     cv::phase(gradx2,grady2,th_grad,true);
-    //cout << "th_grad: " << th_grad << endl;
     float th_epipolar_line = cv::fastAtan2(uj,vj); 
-    //cout << "theta epipolar line: " << th_epipolar_line << endl;
+    DBG(cout << "th_grad: " << th_grad << endl;
+        cout << "theta epipolar line: " << th_epipolar_line << endl)
 
 //FIXME ASAP
     if(abs(th_grad.at<float>(uj,vj) - th_epipolar_line + M_PI) < lambdaL){
       cout << "low angle\n";
       continue;
     }
-    if(abs(th_grad.at<float> - th_epipolar_line - M_PI) < lambdaL){
+    if(abs(th_grad.at<float>(uj,vj) - th_epipolar_line - M_PI) < lambdaL){
       cout << "high angle\n";
       continue;
     }
@@ -180,13 +181,13 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
   }
  
   if(old_err >= 1000.0){
-    //cout << "no best pixel\n";
+    DBG(cout << "no best pixel\n")
   }
   else{
-    //cout << "LEFT THE LOOP,should have a best pixel\n";
-    cout << "best pixel x:" << best_pixel << endl;
-    cout << "err: " << old_err << endl;
-    cout << "photo metric error: " << best_photometric_err << endl;
+    DBG(cout << "LEFT THE LOOP,should have a best pixel\n";
+        cout << "best pixel x:" << best_pixel << endl;
+        cout << "err: " << old_err << endl;
+        cout << "photo metric error: " << best_photometric_err << endl)
     int best_vj = (a/b)*best_pixel + (c/b);
     int uj_plus = best_pixel + 1;
     int vj_plus = (a/b)*uj_plus + (c/b);
@@ -200,26 +201,23 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
     float ustar = best_pixel + (g*best_photometric_err + (1/0.23)*q*best_gradient_modulo_err)/(g*g + (1/0.23)*q*q);
     float ustar_var = (2*image_stddev.at<uchar>(best_pixel,best_vj)*image_stddev.at<uchar>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
   
-    //cout << "Computing Inverse Depth Hypothesis\n";
+    DBG(cout << "Computing Inverse Depth Hypothesis\n")
     ComputeInvDepthHypothesis(kf1, best_pixel, ustar, ustar_var, a, b, c, dh);
   }
 }
 
-// ho gets modified in this method
 void ProbabilityMapping::IntraKeyFrameDepthChecking(std::vector<std::vector<depthHo> >& ho, int imrows, int imcols) {
 
     std::vector<std::vector<depthHo> > ho_new;
     for (size_t i = 0; i < ho.size(); i++) {
         struct depthHo dhtemp;
-        dhtemp.depth = NULL_DEPTH; 
         std::vector<depthHo> temp(ho[i].size(), dhtemp);
         ho_new.push_back(temp);
     }
 
     for (int px = 1; px < (imrows - 1); px++) {
         for (int py = 1; py < (imcols - 1); py++) {
-            //ho_new[px][py].depth = NULL_DEPTH;
-            if (ho[px][py].depth == NULL_DEPTH) {
+            if (ho[px][py].supported == false) {
                 // check if this pixel is surrounded by at least two pixels that are compatible to each other.
                 std::vector<std::vector<depthHo> > compatible_neighbor_neighbor_ho;
                 
@@ -244,6 +242,7 @@ void ProbabilityMapping::IntraKeyFrameDepthChecking(std::vector<std::vector<dept
 
                     ho_new[px][py].depth = fusion.depth;
                     ho_new[px][py].sigma = min_sigma;
+                    ho_new[px][py].supported = true;
                 }
 
             } else {
@@ -262,6 +261,7 @@ void ProbabilityMapping::IntraKeyFrameDepthChecking(std::vector<std::vector<dept
 
                     ho_new[px][py].depth = fusion.depth;
                     ho_new[px][py].sigma = min_sigma;
+                    ho_new[px][py].supported = true;
 
                 } else {
                     ho_new[px][py] = ho[px][py];
@@ -269,18 +269,20 @@ void ProbabilityMapping::IntraKeyFrameDepthChecking(std::vector<std::vector<dept
             }
         }
     }
-    
-    for (int x = 0; x < imrows; x++) {
-        for (int y = 0; y < imcols; y++) {
-            ho[x][y] = ho_new[x][y];
-        }
-    }
+   
+    ho.assign(ho_new.begin(), ho_new.end());
+    //for (int x = 0; x < imrows; x++) {
+    //    for (int y = 0; y < imcols; y++) {
+    //        ho[x][y] = ho_new[x][y];
+    //    }
+    //}
 } 
 
 void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {
     dist->depth = 0;
     dist->sigma = 0;
-
+    dist->supported = false;
+    
     std::vector<depthHo> compatible_ho;
     std::vector<depthHo> compatible_ho_temp;
     float chi = 0;
@@ -321,7 +323,7 @@ void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM:
     // and propagate inverse depth
     for (int px = 0; px < im.rows; px++) {
         for (int py = 0; py < im.cols; py++) {
-            if (h[px][py].depth == NULL_DEPTH) continue; 
+            if (h[px][py].supported == false) continue; 
             
             float depthp = h[px][py].depth;
             // count of neighboring keyframes in which there is at least one compatible pixel
@@ -362,7 +364,7 @@ void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM:
                 for (int nx = pxn-1; nx <= pxn + 1; nx++) {
                     for (int ny = pyn-1; ny < pyn + 1; ny++) {
                         if ((nx == ny) || ((nx - pxn) && (ny - pyn))) continue;
-                        if (h[nx][ny].depth == NULL_DEPTH) continue;
+                        if (!h[nx][ny].supported) continue;
                         // Eq (13)
                         float depthjn = h[nx][ny].depth; 
                         float sigmajn = h[nx][ny].sigma; 
@@ -383,7 +385,7 @@ void ProbabilityMapping::InterKeyFrameDepthChecking(const cv::Mat& im, ORB_SLAM:
             
             // don't retain the inverse depth distribution of this pixel if not enough support in neighbor keyframes
             if (compatible_neighbor_keyframes_count < lambdaN) {
-                h[px][py].depth = NULL_DEPTH;
+                h[px][py].supported = false;
             } else {
                 // gauss-newton step to minimize depth difference in all compatible pixels
                 // need 1 iteration since depth propagation eq. is linear in depth
@@ -434,19 +436,19 @@ void ProbabilityMapping::Equation14(depthHo& dHjn, float& depthp, cv::Mat& xp, c
 ////////////////////////
 
 void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int pixel_x, float ustar, float ustar_var, float a, float b, float c,     
-    ProbabilityMapping::depthHo &dh) {
+    ProbabilityMapping::depthHo *dh) {
   int pixel_y = (a/b) * pixel_x + (c/b);
   float inv_pixel_depth =  0.0;
-  //cout << "getting pixel depth\n";
+  DBG(cout << "getting pixel depth\n")
   GetPixelDepth(pixel_x,pixel_y,kf, inv_pixel_depth);
   //(inv_frame_rot.row(2)*corrected_image.at<float>(ujcx,vjcx)-fx*inv_frame_rot.row(0)*corrected_image.at<float>(ujcx,vjcx))/(transform_data.row(2)*ujcx[vjcx]+fx*transform_data[0]);
   
-  cout << "ustar: " << ustar << "   ustar_var: " << ustar_var << endl;
+  DBG(cout << "ustar: " << ustar << "   ustar_var: " << ustar_var << endl)
   int ustar_min = ustar - sqrt(ustar_var);
   int vstar_min = (a/b)*ustar_min + (c/b);
   
   float inv_depth_min = 0.0;
-  //cout << "getting min pixel depth\n";
+  DBG(cout << "getting min pixel depth\n")
   GetPixelDepth(ustar_min,vstar_min,kf, inv_depth_min);
   //(inv_frame_rot[2]*corrected_image.at<float>(ustarcx_min ,vstarcx_min)-fx*inv_frame_rot[0]*corrected_image.at<float>(ujcx,vjcx))/(-transform_data[2][ustarcx_min][vstarcx_min]+fx*transform_data[0]); 
   
@@ -454,42 +456,50 @@ void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int p
   int vstar_max = (a/b)*ustar_max + (c/b);
   
   float inv_depth_max = 0.0;
-  //cout << "getting max pixel depth \n";
+  DBG(cout << "getting max pixel depth \n")
   GetPixelDepth(ustar_max,vstar_max,kf, inv_depth_max);
   //(inv_frame_rot[2]*corrected_image.at<float>(ustarcx_max ,vstarcx_max)-fx*inv_frame_rot[0]*corrected_image.at<float>(ujcx,vjcx)/)/(-transform_data[2][ustarcx_max][vstarcx_max]+fx*transform_data[0]);
-  //cout << "Got Depths! \n";
-  //cout << "max inv depth: " << inv_depth_max << endl; 
-  //cout << "min inv depth: " << inv_depth_min << endl; 
+  DBG(cout << "Got Depths! \n";
+      cout << "max inv depth: " << inv_depth_max << endl; 
+      cout << "min inv depth: " << inv_depth_min << endl)
+
+  // Equation 9
   float sigma_depth = cv::max(abs(inv_depth_max), abs(inv_depth_min));
   
-  cout << "pixel depth: " << inv_pixel_depth << endl; 
-  cout << "sigma depth: " << sigma_depth << endl;
-  dh.depth = inv_pixel_depth;
-  dh.sigma = sigma_depth;
-  //cout << "return from compute Inv depth ho\n";
+  dh->depth = inv_pixel_depth;
+  dh->sigma = sigma_depth;
+  DBG(cout << "pixel depth: " << inv_pixel_depth << endl; 
+      cout << "sigma depth: " << sigma_depth << endl;
+      cout << "return from compute Inv depth ho\n")
 }
 
 void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
-  //cout << "Going through Scharr convolution\n";
+  DBG(cout << "Going through Scharr convolution\n")
   *gradx = *grady = *grad = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
 
-  cv::Scharr(image, *gradx, CV_8UC1, 1, 0);
-  cv::Scharr(image, *grady, CV_8UC1, 0, 1);
+  cv::Scharr(image, *gradx, CV_32F, 1, 0);
+  cv::Scharr(image, *grady, CV_32F, 0, 1);
 
   cv::Mat absgradx, absgrady, testgrad;
-  //cout << "Putting the gradients in the absolute scale\n";
+  DBG(cout << "Putting the gradients in the absolute scale\n")
   cv::convertScaleAbs(*gradx, absgradx);
   cv::convertScaleAbs(*grady, absgrady);
   
-  //cout << "weighting the gradients\n";
+  DBG(cout << "weighting the gradients\n")
   //cv::addWeighted(*gradx, 0.5, *grady, 0.5, 0, *grad);
-  cv::addWeighted(absgradx, 0.5, absgrady, 0.5, 0, *grad);
+  //cv::addWeighted(absgradx, 0.5, absgrady, 0.5, 0, *grad);
   
-  //cout << "gradx dump: " << *gradx << endl;
-  //cout << "Type: " << grad->depth() << endl;
+  //cv::Mat absgradx2, absgrady2, sum;
+  //cv::pow(absgradx, 2.0, absgradx2);
+  //cv::pow(absgrady, 2.0, absgrady2);
+  //cv::addWeighted(absgradx2, 1.0, absgrady2, 1.0, sum);
+  //cv::sqrt(sum, *grad);
+  cv::magnitude(absgradx, absgrady, *grad);
+  
+  DBG(cout << "gradx dump: " << *gradx << endl;
+      cout << "Type: " << grad->depth() << endl)
 }
-
-/*  
+  
 //might be a good idea to store these when they get calculated during ORB-SLAM.
 void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {
   std::vector<cv::KeyPoint> vKPU1 = k1->GetKeyPointsUn();
@@ -586,7 +596,7 @@ void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::Ke
   //  *th = rotHist[size/2];
   //}
 }
-*/
+
 
 void ProbabilityMapping::PixelNeighborSupport(std::vector<std::vector<depthHo> > H, int px, int py, std::vector<depthHo>& support) {
     support.clear();
@@ -659,7 +669,7 @@ void ProbabilityMapping::GetXp(const cv::Mat& k, int px, int py, cv::Mat* xp) {
     xp2d.at<float>(1,0) = py;
     xp2d.at<float>(2,0) = 1;
     
-    //cout << "calculating Xp\n";
+    DBG(cout << "calculating Xp\n")
     *xp = k.inv() * xp2d;
 }
 
@@ -676,7 +686,7 @@ void ProbabilityMapping::GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, f
     cv::Mat tcw = kf->GetTranslation();
     
     cv::Mat xp;
-    //cout << "Getting XP\n";
+    DBG(cout << "Getting XP\n")
     GetXp(kf->GetCalibrationMatrix(), px, py, &xp); 
 
 
@@ -687,19 +697,15 @@ void ProbabilityMapping::GetPixelDepth(int px, int py, ORB_SLAM::KeyFrame* kf, f
     double denom1 = -tcw.at<float>(2) * ucx;
     double denom2 = fx * tcw.at<float>(0);
     
-    //cout << "calculate depth\n";
-    //cout << "num1:" << num1 << endl;
-    //cout << "num2:" << num2 << endl;
-    //cout << "denom1:" << denom1 << endl;
-    //cout << "denom2:" << denom2 << endl;
+    DBG(cout << "calculate depth\n";
+        cout << "num1:" << num1 << endl;
+        cout << "num2:" << num2 << endl;
+        cout << "denom1:" << denom1 << endl;
+        cout << "denom2:" << denom2 << endl)
 
 
-    float depth = (num1 - num2) / (denom1 + denom2); 
-    cout << "depth: " << depth << endl;
-    //cout << "p: " << p << endl;
-    p = depth;
-    //cout << "pointer works\n";
-    cout << "p: " << p << endl;
+    p = (num1 - num2) / (denom1 + denom2); 
+    DBG(cout << "depth: " << p << endl)
 } 
 
 bool ProbabilityMapping::ChiTest(const depthHo& ha, const depthHo& hb, float* chi_val) {
