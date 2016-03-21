@@ -34,7 +34,7 @@
 #include "LoopClosing.h"
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
-
+#include "ProbabilityMapping.h"
 
 #include "Converter.h"
 
@@ -127,6 +127,9 @@ int main(int argc, char **argv)
     //Initialize the Local Mapping Thread and launch
     ORB_SLAM::LocalMapping LocalMapper(&World);
     boost::thread localMappingThread(&ORB_SLAM::LocalMapping::Run,&LocalMapper);
+    
+    //initialize probability mapping
+    ProbabilityMapping ProbabilityMapper;
 
     //Initialize the Loop Closing Thread and launch
     ORB_SLAM::LoopClosing LoopCloser(&World, &Database, &Vocabulary);

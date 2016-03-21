@@ -30,9 +30,7 @@
 
 ProbabilityMapping::ProbabilityMapping() {}
 void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {}
-void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
-ProbabilityMapping::ProbabilityMapping() {}
-void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
+//void ProbabilityMapping::GetIntensityGradient(cv::Mat im, float* g) {}
 
 
 //  depthHo ho[image.rows][image.cols];
@@ -279,7 +277,7 @@ void ProbabilityMapping::IntraKeyFrameDepthChecking(std::vector<std::vector<dept
     }
 } 
 
-void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {
+void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo*>& h, depthHo* dist) {
     dist->depth = 0;
     dist->sigma = 0;
 
@@ -491,8 +489,7 @@ void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, 
   //cout << "Type: " << grad->depth() << endl;
 }
 
-
-//TODO use IC_ANGLE from ORBextractor.cc
+/*  
 //might be a good idea to store these when they get calculated during ORB-SLAM.
 void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::KeyFrame* k2, float* th) {
   std::vector<cv::KeyPoint> vKPU1 = k1->GetKeyPointsUn();
@@ -589,6 +586,7 @@ void ProbabilityMapping::GetInPlaneRotation(ORB_SLAM::KeyFrame* k1, ORB_SLAM::Ke
   //  *th = rotHist[size/2];
   //}
 }
+*/
 
 void ProbabilityMapping::PixelNeighborSupport(std::vector<std::vector<depthHo> > H, int px, int py, std::vector<depthHo>& support) {
     support.clear();
