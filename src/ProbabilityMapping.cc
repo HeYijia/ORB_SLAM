@@ -54,7 +54,7 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
   cout << "Got it!\n";
   cout << "Generating Depth Hypotheses...\n";
   
-  std::vector<depthHo*> depth_ho;
+  std::vector<depthHo> depth_ho;
 
   std::vector<std::vector<depthHo> > temp_ho (image.rows, std::vector<depthHo>(image.cols, depthHo()) );
   for(int x = 0; x < image.rows; x++){
@@ -70,10 +70,10 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
         ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
         
         depthHo* dh = new depthHo();
-        EpipolarSearch(kf, kf2, x, y, gradx, grady, grad, min_depth, max_depth, *dh);
+        EpipolarSearch(kf, kf2, x, y, gradx, grady, grad, min_depth, max_depth, dh);
         cout << "Depth: " << dh->depth << "\n";
         if (dh != NULL)
-            depth_ho.push_back(dh);
+            depth_ho.push_back(*dh);
       }
       
       printf("FirstLoop: found a set of %d hypotheseses for pixel %d,%d\n", (int)(depth_ho.size()), x, y);
@@ -82,9 +82,9 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
         cout << "Calculating Inverse Depth Hypothesis\n";
         InverseDepthHypothesisFusion(depth_ho, dh);
         temp_ho[x][y] = *dh;
-      } else {
-        temp_ho[x][y] = NULL;
-      }
+      }// else {
+       // temp_ho[x][y] = NULL;
+      //}
     }
   }
   ho = temp_ho;
@@ -277,7 +277,7 @@ void ProbabilityMapping::IntraKeyFrameDepthChecking(std::vector<std::vector<dept
     }
 } 
 
-void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo*>& h, depthHo* dist) {
+void ProbabilityMapping::InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist) {
     dist->depth = 0;
     dist->sigma = 0;
 

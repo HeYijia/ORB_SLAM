@@ -53,7 +53,7 @@ public:
 		float depth;
 		float sigma;
 
-                depthHo():depth(NULL),sigma(NULL) {}
+                depthHo():depth(0),sigma(0) {}
         };
 
         ProbabilityMapping();
@@ -65,7 +65,7 @@ public:
         void EpipolarSearch(ORB_SLAM::KeyFrame *kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, cv::Mat gradx, cv::Mat grady, cv::Mat grad, float min_depth, float max_depth, depthHo &dh);
 	/* * \brief void inverse_depth_hypothesis_fusion(const vector<depthHo> H, depthHo* dist): 
 	 * *         get the parameters of depth hypothesis distrubution from list of depth hypotheses */
-        void InverseDepthHypothesisFusion(const std::vector<depthHo*>& h, depthHo* dist);
+        void InverseDepthHypothesisFusion(const std::vector<depthHo>& h, depthHo* dist);
 	/* * \brief void intraKeyFrameDepthChecking(std::vector<std::vector<depthHo> > h, int imrows, int imcols): intra-keyframe depth-checking, smoothing, and growing. */
         void IntraKeyFrameDepthChecking(std::vector<std::vector<depthHo> >& ho, int imrows, int imcols);
 	/* * \brief void interKeyFrameDepthChecking(ORB_SLAM::KeyFrame* currentKF, std::vector<std::vector<depthHo> > h, int imrows, int imcols): 
