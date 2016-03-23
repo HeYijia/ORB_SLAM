@@ -29,6 +29,8 @@
 
 #define DEBUG 1
 #define DBG(do_something) if (DEBUG) { do_something; }
+#define SAVE_IMAGES 1
+#define SAVE(do_something) if (SAVE_IMAGES) { do_something; }
 
 ProbabilityMapping::ProbabilityMapping() {}
 
@@ -47,7 +49,7 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
 
   cv::Mat gradx, grady, gradmag, gradth, really;
   cv::Mat image = kf->GetImage();
-
+  SAVE(imwrite("/home/josh/Workspace/Scanner3D/mainImage.png",image))
   GetGradientMagAndOri(image, &gradx, &grady, &gradmag, &gradth, &really);
   DBG(cout << "Got it!\n";
       cout << "Generating Depth Hypotheses...\n")
@@ -55,35 +57,36 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
   std::vector<depthHo> depth_ho;
 
   std::vector<std::vector<depthHo> > temp_ho (image.rows, std::vector<depthHo>(image.cols, depthHo()) );
-  for(int x = 0; x < image.rows; x++){
-    for(int y = 0; y < image.cols; y++){
-      DBG(cout << "Pixel gradient magnitude: " << gradmag.at<float>(x,y) << "  lambdaG: " << lambdaG <<"\n")
-      if(gradmag.at<float>(x,y) < lambdaG){
-        continue;
-      }
+  depth_ho.clear();
+  DBG(cout << "Closest Matches size:"<< closestMatches.size() << "\n")
+
+  for(size_t i=0; i<closestMatches.size(); i++){
+    ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
+    SAVE(imwrite("/home/josh/Workspace/Scanner3D/math"+ boost::lexical_cast<std::string>(i) +".png",image))   
+    for(int x = 0; x < image.rows; x++){
+      for(int y = 0; y < image.cols; y++){
+        DBG(cout << "Pixel gradient magnitude: " << gradmag.at<float>(x,y) << "  lambdaG: " << lambdaG <<"\n")
+        if(gradmag.at<float>(x,y) < lambdaG){
+          continue;
+        }
       
-      depth_ho.clear();
-      DBG(cout << "Closest Matches size:"<< closestMatches.size() << "\n")
-      for(size_t i=0; i<closestMatches.size(); i++){
-        ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
-        
         depthHo dh;
         float pixel = image.at<uchar>(x,y); //maybe it should be cv::Mat
         EpipolarSearch(kf, kf2, x, y, pixel, gradx, grady, gradmag, min_depth, max_depth, &dh);
         DBG(cout << "Depth: " << dh.depth << "\n")
         if (dh.supported)
             depth_ho.push_back(dh);
-      }
 
-      DBG(printf("FirstLoop: found a set of %d hypotheseses for pixel %d,%d\n", (int)(depth_ho.size()), x, y))
-      if (depth_ho.size()) {
-        depthHo dh;
-        DBG(cout << "Calculating Inverse Depth Hypothesis\n")
-        InverseDepthHypothesisFusion(depth_ho, &dh);
-        dh.supported = true;
-        temp_ho[x][y] = dh;
-      } else {
-        temp_ho[x][y].supported = false;
+        DBG(printf("FirstLoop: found a set of %d hypotheseses for pixel %d,%d\n", (int)(depth_ho.size()), x, y))
+        if (depth_ho.size()) {
+          depthHo dh;
+          DBG(cout << "Calculating Inverse Depth Hypothesis\n")
+          InverseDepthHypothesisFusion(depth_ho, &dh);
+          dh.supported = true;
+          temp_ho[x][y] = dh;
+        } else {
+            temp_ho[x][y].supported = false;
+        }
       }
     }
   }
@@ -138,32 +141,19 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
     }
     DBG(cout << "IN LOOP\n";
         cout << "Pixel value2:" << static_cast<unsigned>(image.at<uchar>(uj,vj)) << endl;
-        string r;
-        uchar d1 = grad2mag.type() & CV_MAT_DEPTH_MASK;
-        uchar d2 = grad2th.type() & CV_MAT_DEPTH_MASK;
-        switch ( d1 ) {
-          case CV_8U:  r = "8U"; break;
-          case CV_8S:  r = "8S"; break;
-          case CV_16U: r = "16U"; break;
-          case CV_16S: r = "16S"; break;
-          case CV_32S: r = "32S"; break;
-          case CV_32F: r = "32F"; break;
-          case CV_64F: r = "64F"; break;
-          default:     r = "User"; break;
-        }
-        cout << "Depths: " << r  << endl;
-        cout << "Grad2mag:" << grad2mag.at<float>(uj,vj) << endl;
-        cout << "manual magnitude:" << really2.at<float>(uj,vj) << endl)
+        cout << "Grad2mag:" << grad2mag.at<float>(uj,vj) << endl)
+        //cout << "manual magnitude:" << really2.at<float>(uj,vj) << endl)
+    
+    DBG(cout << "calculating epipolar line angle\n");
+    float th_epipolar_line = cv::fastAtan2(uj,vj); 
+    DBG(cout << "theta epipolar line: " << th_epipolar_line << endl)
+    DBG(cout << "grad2th: " << grad2th.at<float>(uj,vj) << endl)
     
     if(grad2mag.at<float>(uj,vj) < lambdaG){
       DBG(cout << "low gradient\n")
       continue;
     }
-
-    float th_epipolar_line = cv::fastAtan2(uj,vj); 
-    DBG(cout << "grad2th: " << grad2th.at<float>(uj,vj) << endl;
-        cout << "theta epipolar line: " << th_epipolar_line << endl)
-
+    
 //FIXME ASAP
     if(abs(grad2th.at<float>(uj,vj) - th_epipolar_line + 180) < lambdaL){
       cout << "low angle\n";
@@ -208,7 +198,7 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
     float q = (grad2mag.at<float>(uj_plus, vj_plus) - grad2mag.at<float>(uj_minus, vj_plus))/2.0;
 
     float ustar = best_pixel + (g*best_photometric_err + (1/0.23)*q*best_gradient_modulo_err)/(g*g + (1/0.23)*q*q);
-    float ustar_var = (2*image_stddev.at<uchar>(best_pixel,best_vj)*image_stddev.at<uchar>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
+    float ustar_var = (2*image_stddev.at<float>(best_pixel,best_vj)*image_stddev.at<float>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
   
     DBG(cout << "Computing Inverse Depth Hypothesis\n")
     ComputeInvDepthHypothesis(kf1, best_pixel, ustar, ustar_var, a, b, c, dh);
@@ -496,13 +486,39 @@ void ProbabilityMapping::GetGradientMagAndOri(const cv::Mat& image, cv::Mat* gra
   cv::magnitude(*gradx,*grady,*mag);
   cv::phase(*gradx,*grady,*ori,true);
 
+
+    cout << "printing results of grad mag and theta" << endl;
+    std::vector<FILE*> files;
+    FILE* fmag_cv = fopen("/home/josh/Workspace/Scanner3D/cv_grad_mag.csv", "w");
+    FILE* ftheta_cv = fopen("/home/josh/Workspace/Scanner3D/cv_grad_theta.csv", "w");
+    files.push_back(fmag_cv);
+    files.push_back(ftheta_cv);
+    for (int k=0; k < files.size(); k++) {
+      if (files[k]) {
+        cv::Mat* m;
+        switch (k) { 
+          case 1: m = mag; break; // cv magnitude
+          default: m = ori; break; // cv theta
+        }
+        for (int i=0; i < m->rows; i++) {
+          for (int j=0; j < m->cols; j++) {
+            float f = m->at<float>(i,j);
+            fprintf(files[k], "%3.3f, ", f); 
+          }
+          fprintf(files[k], "\n");
+        }
+        fclose(files[k]);
+      }
+    }
   //For manual version
 
-  cv::Mat absgradx2, absgrady2, sum;
-  cv::pow(*gradx, 2.0, absgradx2);
-  cv::pow(*grady, 2.0, absgrady2);
-  cv::addWeighted(absgradx2, 1.0, absgrady2, 1.0, 0, sum);
-  cv::sqrt(sum, *really);
+  //cv::Mat gradx2 = cv::Mat::zeros(image.rows, image.cols, CV_32F);
+  //cv::Mat grady2 = cv::Mat::zeros(image.rows, image.cols, CV_32F);
+  //cv::Mat sum = cv::Mat::zeros(image.rows, image.cols, CV_32F);
+  //cv::pow(*gradx, 2.0, gradx2);
+  //cv::pow(*grady, 2.0, grady2);
+  //cv::addWeighted(gradx2, 1.0, grady2, 1.0, 0, sum);
+  //cv::sqrt(sum, *really);
 
   //cv::Scharr(image, *gradx, CV_16S, 1, 0);
   //cv::Scharr(image, *grady, CV_16S, 0, 1);
