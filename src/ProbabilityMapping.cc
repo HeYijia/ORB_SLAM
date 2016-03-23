@@ -45,10 +45,10 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
   DBG(cout << "Found! min:" << min_depth << "  max:" << max_depth << "\n";
       cout << "Getting Image Gradient\n")
 
-  cv::Mat gradx, grady, grad;
+  cv::Mat gradx, grady, gradmag, gradth, really;
   cv::Mat image = kf->GetImage();
 
-  GetImageGradient(image, &gradx, &grady, &grad);
+  GetGradientMagAndOri(image, &gradx, &grady, &gradmag, &gradth, &really);
   DBG(cout << "Got it!\n";
       cout << "Generating Depth Hypotheses...\n")
   
@@ -57,8 +57,8 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
   std::vector<std::vector<depthHo> > temp_ho (image.rows, std::vector<depthHo>(image.cols, depthHo()) );
   for(int x = 0; x < image.rows; x++){
     for(int y = 0; y < image.cols; y++){
-      DBG(cout << "Pixel gradient: " <<static_cast<unsigned>(grad.at<uchar>(x,y)) << "  lambdaG: " << lambdaG <<"\n")
-      if(grad.at<uchar>(x,y) < lambdaG){
+      DBG(cout << "Pixel gradient magnitude: " << gradmag.at<float>(x,y) << "  lambdaG: " << lambdaG <<"\n")
+      if(gradmag.at<float>(x,y) < lambdaG){
         continue;
       }
       
@@ -69,7 +69,7 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
         
         depthHo dh;
         float pixel = image.at<uchar>(x,y); //maybe it should be cv::Mat
-        EpipolarSearch(kf, kf2, x, y, pixel, gradx, grady, grad, min_depth, max_depth, &dh);
+        EpipolarSearch(kf, kf2, x, y, pixel, gradx, grady, gradmag, min_depth, max_depth, &dh);
         DBG(cout << "Depth: " << dh.depth << "\n")
         if (dh.supported)
             depth_ho.push_back(dh);
@@ -124,15 +124,10 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
 
   int vj;
 
-  cv::Mat th_grad, th_pi;
-  cv::Mat gradx2, grady2, grad2;
+  cv::Mat gradx2, grady2, grad2mag, grad2th, really2;
   DBG(cout << "Getting Image Gradient\n")
-  GetImageGradient(image, &gradx2, &grady2, &grad2);
-  //GetInPlaneRotation(kf1, kf2, &th_rot);//FIXME 
-  //GetGradientOrientation(x,y,gradx,grady, &th_pi);
-  cv::phase(gradx,grady, th_pi,true);
-  DBG(cout << "Getting Gradient Orientation\n";
-      cout << "th_pi: " << th_pi << endl)
+  GetGradientMagAndOri(image, &gradx2, &grady2, &grad2mag, &grad2th, &really2);
+  DBG(cout << "Getting Gradient Orientation\n")
   for(int uj = 0; uj < image.cols; uj++){ // FIXME should use  min and max depth
     vj = (a/b)*uj+(c/b);
     DBG(cout << "uj: " << uj << endl;
@@ -142,26 +137,39 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
       continue;
     }
     DBG(cout << "IN LOOP\n";
-        cout << "Pixel value2:" << static_cast<unsigned>(image.at<uchar>(uj,vj)) << endl; 
-        cout << "Grad2:" << static_cast<unsigned>(grad2.at<uchar>(uj,vj)) << endl)
+        cout << "Pixel value2:" << static_cast<unsigned>(image.at<uchar>(uj,vj)) << endl;
+        string r;
+        uchar d1 = grad2mag.type() & CV_MAT_DEPTH_MASK;
+        uchar d2 = grad2th.type() & CV_MAT_DEPTH_MASK;
+        switch ( d1 ) {
+          case CV_8U:  r = "8U"; break;
+          case CV_8S:  r = "8S"; break;
+          case CV_16U: r = "16U"; break;
+          case CV_16S: r = "16S"; break;
+          case CV_32S: r = "32S"; break;
+          case CV_32F: r = "32F"; break;
+          case CV_64F: r = "64F"; break;
+          default:     r = "User"; break;
+        }
+        cout << "Depths: " << r  << endl;
+        cout << "Grad2mag:" << grad2mag.at<float>(uj,vj) << endl;
+        cout << "manual magnitude:" << really2.at<float>(uj,vj) << endl)
     
-    if(grad2.at<uchar>(uj,vj) < lambdaG){
+    if(grad2mag.at<float>(uj,vj) < lambdaG){
       DBG(cout << "low gradient\n")
       continue;
     }
 
-    //GetGradientOrientation(uj,vj,gradx2,grady2,&th_grad);
-    cv::phase(gradx2,grady2,th_grad,true);
     float th_epipolar_line = cv::fastAtan2(uj,vj); 
-    DBG(cout << "th_grad: " << th_grad << endl;
+    DBG(cout << "grad2th: " << grad2th.at<float>(uj,vj) << endl;
         cout << "theta epipolar line: " << th_epipolar_line << endl)
 
 //FIXME ASAP
-    if(abs(th_grad.at<float>(uj,vj) - th_epipolar_line + M_PI) < lambdaL){
+    if(abs(grad2th.at<float>(uj,vj) - th_epipolar_line + 180) < lambdaL){
       cout << "low angle\n";
       continue;
     }
-    if(abs(th_grad.at<float>(uj,vj) - th_epipolar_line - M_PI) < lambdaL){
+    if(abs(grad2th.at<float>(uj,vj) - th_epipolar_line - 180) < lambdaL){
       cout << "high angle\n";
       continue;
     }
@@ -169,9 +177,10 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
       //continue;
    
     float photometric_err = pixel - image.at<uchar>(uj,vj); //FIXME properly calculate photometric error
-    float gradient_modulo_err = grad.at<uchar>(uj,vj)  - grad2.at<uchar>(uj,vj);
-    float err = (photometric_err*photometric_err + (gradient_modulo_err*gradient_modulo_err)/0.23)/(image_stddev.at<uchar>(uj,vj));
-
+    float gradient_modulo_err = grad.at<float>(uj,vj)  - grad2mag.at<float>(uj,vj);
+    float err = (photometric_err*photometric_err + (gradient_modulo_err*gradient_modulo_err)/0.23)/(image_stddev.at<float>(uj,vj));
+    
+    DBG(cout << "testing error\n")
     if(abs(err) < abs(old_err)){
       best_pixel = uj;
       old_err = err;
@@ -196,7 +205,7 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
 
     float g = (image.at<uchar>(uj_plus, vj_plus) - image.at<uchar>(uj_minus, vj_minus))/2.0;
 
-    float q = (grad2.at<uchar>(uj_plus, vj_plus) - grad2.at<uchar>(uj_minus, vj_plus))/2;
+    float q = (grad2mag.at<float>(uj_plus, vj_plus) - grad2mag.at<float>(uj_minus, vj_plus))/2.0;
 
     float ustar = best_pixel + (g*best_photometric_err + (1/0.23)*q*best_gradient_modulo_err)/(g*g + (1/0.23)*q*q);
     float ustar_var = (2*image_stddev.at<uchar>(best_pixel,best_vj)*image_stddev.at<uchar>(best_pixel,best_vj)/(g*g + (1/0.23)*q*q));
@@ -473,31 +482,39 @@ void ProbabilityMapping::ComputeInvDepthHypothesis(ORB_SLAM::KeyFrame* kf, int p
       cout << "return from compute Inv depth ho\n")
 }
 
-void ProbabilityMapping::GetImageGradient(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* grad) {
+void ProbabilityMapping::GetGradientMagAndOri(const cv::Mat& image, cv::Mat* gradx, cv::Mat* grady, cv::Mat* mag, cv::Mat* ori, cv::Mat* really) {
   DBG(cout << "Going through Scharr convolution\n")
-  *gradx = *grady = *grad = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
+  *gradx = cv::Mat::zeros(image.rows, image.cols, CV_32F);
+  *grady = cv::Mat::zeros(image.rows, image.cols, CV_32F);
+  *mag =  cv::Mat::zeros(image.rows, image.cols, CV_32F);
+  *ori = cv::Mat::zeros(image.rows, image.cols, CV_32F);
 
+  //For built in version
   cv::Scharr(image, *gradx, CV_32F, 1, 0);
   cv::Scharr(image, *grady, CV_32F, 0, 1);
 
-  cv::Mat absgradx, absgrady, testgrad;
-  DBG(cout << "Putting the gradients in the absolute scale\n")
-  cv::convertScaleAbs(*gradx, absgradx);
-  cv::convertScaleAbs(*grady, absgrady);
-  
-  DBG(cout << "weighting the gradients\n")
-  //cv::addWeighted(*gradx, 0.5, *grady, 0.5, 0, *grad);
-  //cv::addWeighted(absgradx, 0.5, absgrady, 0.5, 0, *grad);
-  
-  //cv::Mat absgradx2, absgrady2, sum;
-  //cv::pow(absgradx, 2.0, absgradx2);
-  //cv::pow(absgrady, 2.0, absgrady2);
-  //cv::addWeighted(absgradx2, 1.0, absgrady2, 1.0, sum);
-  //cv::sqrt(sum, *grad);
-  cv::magnitude(absgradx, absgrady, *grad);
-  
-  DBG(cout << "gradx dump: " << *gradx << endl;
-      cout << "Type: " << grad->depth() << endl)
+  cv::magnitude(*gradx,*grady,*mag);
+  cv::phase(*gradx,*grady,*ori,true);
+
+  //For manual version
+
+  cv::Mat absgradx2, absgrady2, sum;
+  cv::pow(*gradx, 2.0, absgradx2);
+  cv::pow(*grady, 2.0, absgrady2);
+  cv::addWeighted(absgradx2, 1.0, absgrady2, 1.0, 0, sum);
+  cv::sqrt(sum, *really);
+
+  //cv::Scharr(image, *gradx, CV_16S, 1, 0);
+  //cv::Scharr(image, *grady, CV_16S, 0, 1);
+
+  //cv::Mat absgradx, absgrady;
+  //cv::convertScaleAbs(*gradx, absgradx);
+  //cv::convertScaleAbs(*grady, absgrady);
+  //cv::addWeighted(absgradx2, 0.5, absgrady2, 0.5, 0, *test);
+
+ 
+  //DBG(cout << "gradx dump: " << *gradx << endl;
+    //  cout << "Type: " << grad->depth() << endl)
 }
   
 //might be a good idea to store these when they get calculated during ORB-SLAM.
