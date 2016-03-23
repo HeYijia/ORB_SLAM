@@ -1,10 +1,14 @@
 build/
 bin/
-Data/*.bag
-Data/*.txt
-Data/*.tar.gz
+Data/
 Thirdparty/DBoW2/lib/
 Thirdparty/g2o/
 Thirdparty/g2o/lib/
 Fourthparty/rospkgs/devel/
 Fourthparty/rospkgs/build/
+*Make*
+cmake*
+catkin_generated/
+
+!Data/*.yaml
+!CMakeLists.txt

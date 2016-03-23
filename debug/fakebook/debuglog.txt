@@ -1,0 +1,27 @@
+1-29 R
+=======
+
+KeyFrame.cc/.h:
+- fixed what was probably a copy-paste error in the return statement (needed to return a vector of point depths;
+    was returning a single (median) point like the method it was modeled after
+- fixed method signature to include default parameter (int q = 2)
+ProbabilityMapping.cc/.h:
+- went through .cc file and made sure all method signatures were present and correct in the .h file
+- based on Google's style-guide, made sure input arguments (non-primitives) are passed as const& and
+    output arguments are pointers
+
+1-30 R
+=======
+
+- moved debuglog.txt to this directory
+- copied ProbabilityMapping.* to repsective src/ and inc/ files in this directory
+- created stub files/methods for files included by Probability.h (ex: KeyFrame)
+
+- the idea is that we can debug this 'minimal' version much faster here (without having
+    to build all the other ORB-SLAM modules every time)
+
+- began debugging FirstLoop (sorry, it was at the top of the file)
+    -fixed namespace errors
+    -depthHo => depthHo* so that can be set/compared to NULL
+    -KeyFrame& => KeyFrame* since that's how ORB-SLAM passes them around
+    -FirstLoop now compiles
