@@ -30,13 +30,15 @@
 #define DEBUG 1
 #define DBG(do_something) if (DEBUG) { do_something; }
 #define SAVE_IMAGES 1
-#define SAVE(do_something) if (SAVE_IMAGES) { do_something; }
+#define SAVE(do_something) if (SAVE_IMAGES) { do_something }
 
 ProbabilityMapping::ProbabilityMapping() {}
 
 void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vector<depthHo> > &ho){
   DBG(cout << "Enter the FirstLoop\n") 
-
+  
+  if(kf->isBad())
+    exit(0);
   std::vector<ORB_SLAM::KeyFrame*> closestMatches = kf->GetBestCovisibilityKeyFrames(covisN);
   
   DBG(cout << "Find Stereo Search Constraints\n")
@@ -49,7 +51,7 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
 
   cv::Mat gradx, grady, gradmag, gradth, really;
   cv::Mat image = kf->GetImage();
-  SAVE(imwrite("/home/josh/Workspace/Scanner3D/mainImage.png",image))
+  SAVE(imwrite("/home/josh/Workspace/Scanner3D/mainImage.png",image);)
   GetGradientMagAndOri(image, &gradx, &grady, &gradmag, &gradth, &really);
   DBG(cout << "Got it!\n";
       cout << "Generating Depth Hypotheses...\n")
@@ -62,7 +64,7 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
 
   for(size_t i=0; i<closestMatches.size(); i++){
     ORB_SLAM::KeyFrame* kf2 = closestMatches[i];
-    SAVE(imwrite("/home/josh/Workspace/Scanner3D/math"+ boost::lexical_cast<std::string>(i) +".png",image))   
+    SAVE(imwrite("/home/josh/Workspace/Scanner3D/math"+ boost::lexical_cast<std::string>(i) +".png",image);)   
     for(int x = 0; x < image.rows; x++){
       for(int y = 0; y < image.cols; y++){
         DBG(cout << "Pixel gradient magnitude: " << gradmag.at<float>(x,y) << "  lambdaG: " << lambdaG <<"\n")
@@ -72,7 +74,7 @@ void ProbabilityMapping::FirstLoop(ORB_SLAM::KeyFrame *kf, std::vector<std::vect
       
         depthHo dh;
         float pixel = image.at<uchar>(x,y); //maybe it should be cv::Mat
-        EpipolarSearch(kf, kf2, x, y, pixel, gradx, grady, gradmag, min_depth, max_depth, &dh);
+        EpipolarSearch(kf, kf2, x, y, pixel, gradmag, min_depth, max_depth, &dh);
         DBG(cout << "Depth: " << dh.depth << "\n")
         if (dh.supported)
             depth_ho.push_back(dh);
@@ -108,7 +110,7 @@ void ProbabilityMapping::StereoSearchConstraints(ORB_SLAM::KeyFrame* kf, float* 
   *min_depth = mean - 2 * stdev;
 }
   
-void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, float pixel, cv::Mat gradx, cv::Mat grady, cv::Mat grad, 
+void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFrame *kf2, int x, int y, float pixel, cv::Mat grad, 
     float min_depth, float max_depth, depthHo *dh) {
 
   cv::Mat image = kf2->GetImage();
@@ -131,6 +133,18 @@ void ProbabilityMapping::EpipolarSearch(ORB_SLAM::KeyFrame* kf1, ORB_SLAM::KeyFr
   DBG(cout << "Getting Image Gradient\n")
   GetGradientMagAndOri(image, &gradx2, &grady2, &grad2mag, &grad2th, &really2);
   DBG(cout << "Getting Gradient Orientation\n")
+  for(int x1 = 0; x1 < image.cols; x1++){
+    for(int y1 = 0; y1 < image.rows; y1++){
+      DBG(cout << "x: " << x1 << endl)
+      DBG(cout << "y: " << y1 << endl)
+      DBG(cout << "Gradient Modulo: " << grad2mag.at<float>(x1,y1) << endl)
+      DBG(cout << "Gradient Orientation: " << grad2th.at<float>(x1,y1) << endl)
+      if((grad2mag.at<float>(x1, y1) < 0)){
+        DBG(cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n")
+        exit(0);
+      }
+    }
+  }
   for(int uj = 0; uj < image.cols; uj++){ // FIXME should use  min and max depth
     vj = (a/b)*uj+(c/b);
     DBG(cout << "uj: " << uj << endl;
@@ -486,8 +500,8 @@ void ProbabilityMapping::GetGradientMagAndOri(const cv::Mat& image, cv::Mat* gra
   cv::magnitude(*gradx,*grady,*mag);
   cv::phase(*gradx,*grady,*ori,true);
 
-
-    cout << "printing results of grad mag and theta" << endl;
+  
+  SAVE(cout << "printing results of grad mag and theta" << endl;
     std::vector<FILE*> files;
     FILE* fmag_cv = fopen("/home/josh/Workspace/Scanner3D/cv_grad_mag.csv", "w");
     FILE* ftheta_cv = fopen("/home/josh/Workspace/Scanner3D/cv_grad_theta.csv", "w");
@@ -509,7 +523,7 @@ void ProbabilityMapping::GetGradientMagAndOri(const cv::Mat& image, cv::Mat* gra
         }
         fclose(files[k]);
       }
-    }
+    })
   //For manual version
 
   //cv::Mat gradx2 = cv::Mat::zeros(image.rows, image.cols, CV_32F);
