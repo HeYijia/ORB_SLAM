@@ -174,6 +174,10 @@ int main(int argc, char **argv)
 
         if(pKF->isBad())
             continue;
+        cout << "Median scene depth of KeyFrame " << i << ": " << pKF->ComputeSceneMedianDepth() << "\n";
+        char buf[128];
+        sprintf(buf, "/home/acceber/projects/eecs395/ORB_SLAM/Data/output/keyframes/KeyFrame_%02lu.jpg", i);
+        cv::imwrite(buf, pKF->GetImage());
 
         cv::Mat R = pKF->GetRotation().t();
         vector<float> q = ORB_SLAM::Converter::toQuaternion(R);

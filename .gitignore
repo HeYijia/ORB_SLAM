@@ -9,6 +9,7 @@ Fourthparty/rospkgs/build/
 *Make*
 cmake*
 catkin_generated/
+KeyFrameTrajectory.txt
 
 !Data/*.yaml
 !CMakeLists.txt
